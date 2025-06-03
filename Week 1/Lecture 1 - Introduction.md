@@ -24,8 +24,113 @@
 - user jobs still **interact with the hardware directly** but with *additional information* from the OS
 ##### Improvements Required
 - Simple Batch processing is inefficient $\implies$ CPU has idle time waiting for I/O operations to be completed
-	- use of multiprogramming or time sharing to make full use of this idle time
-##### Time-sharing
-- allows many users to interact using terminals (i.e. `tty`)
-- user job scheduling provides the illusion of concurrency
-- has memory management features available as well
+	- use of multiprogramming or time-sharing to make full use of this idle time
+### A3. Time-sharing
+##### Properties
+- allows **many users** to interact using terminals (i.e. `tty`)
+- user **job scheduling** provides the illusion of concurrency
+- handles CPU time, memory and storage (has features for memory and storage management etc.) $\implies$ sharing of these resources is also possible
+- **hardware virtualization** where each program can execute as if it has **all the resources to itself**
+
+**Examples**: CTSS developed @ MIT and Multics, the precursor to Unix
+- pushing the virtual memory and security technologies
+### A4. Minicomputer & Unix
+- Minicomputer is modelled after the mainframe, but it is a smaller and cheaper version 
+	- Example: Digital Equipment Corp PDP-11
+
+- Unix was developed by AT&T employees
+
+### A5. OS on Personal Computer
+- each machine is dedicated to a user, which gives rise to the personal OS
+- different models $\to$ Single User (i.e. Windows) and General Time Sharing (Unix)
+
+---
+## B. Motivation for Operating Systems
+### B1. Abstraction
+- $\exists$ large variation in hardware configurations
+	- hard disks can have different capacities and capabilities (i.e. store different formats?)
+
+- However, hardware in the same category is well-defined and has common functionality
+
+- choose to hide the low-level implementation details from the user
+	- users can choose to perform tasks w/o having concern about low-level implementations
+	- simplifies programming through exposure of API calls
+
+- presents a common high-level functionality to the user instead
+
+- provides efficiency and portability
+### B2. Utility as a Resource allocator & manager
+- program execution requires many resources, which OS provides out of the box
+	- management and sharing of resources
+	- arbitrates potentially conflicting requests from various processes (to ensure efficient and fair resource usage)
+	- enables for process synchronization
+
+- under the condition that multiple programs should be able to **execute simultaneously**
+
+### B3. Control Program
+- prevents the misuse of the computer's hardware resources due to accidental bugs and malicious uses
+
+- multiple users could share the computer and it is tricky to ensure a separate user space for each of them
+
+- controls the execution of programs by preventing errors and providing security
+	- enforcement of usage policies
+
+- allows for program portability across different hardware implementations
+---
+## C. Operating System Structures
+- implementation of the OS describes the best way of providing the capabilities or functionalities
+- structure of the OS describes the organization of various components
+- important to OS to be *flexible, robust and easily maintained*
+	![OS-structural-components](../assets/OS-structural-components.png)
+##### The OS as a program
+- OS is known also as kernel
+- is a program with some special features as it 
+	- deals with hardware issues
+	- provides the system call interface ($\neq$ hardware API)
+		- is the interface between user and kernel modes
+	- has special code for interrupt handlers and device drivers
+
+- Kernel code is quite different from programs running on the OS itself
+	- cannot use system calls, default library functions and I/O functions as well
+
+### C1. Implementing the OS
+1. Programming language
+	- historical implementation in assembly language, now in higher-level languages like C++
+	- heavily dependent on hardware architecture
+
+2. Common Code Organization
+	- implementation in machine-independent high level language, machine-dependent high level language or machine-dependent asm
+
+3. Challenges of implementations
+	- no APIs to call
+	- debugging is hard since the code is complex and the codebase is large
+
+### C2. OS Structure Types
+1. **Monolithic**
+	- the kernel is one big special program
+	- good software engineering principles are possible 
+	- traditional approach taken by most Unix variants and Windows NT
+		![monolithic-OS-components](../assets/monolithic-OS-components.png)
+
+2. **Microkernel**
+	- is very small and clean
+	- only provides basic and essential facilities such as inter-process communication (IPC)
+		![microkernel-OS-components](../assets/microkernel-OS-components.png)
+
+
+3. **Layered**
+	- is the generalization of monolithic systems
+	- can organize the components into hierarchy of layers
+		- upper layers make use of lower layer's services
+		- lowest layer is the hardware and the highest layer is the user interface
+
+4. **Client-Server Architecture**
+	- is a variant of the microkernel where there are two classes of processes
+		- client processes request services
+		- server process is built on top of the microkernel
+		- client and server processes can be on distinct machines
+
+5. **Exokernel**
+
+---
+## D. Virtualization
