@@ -134,3 +134,18 @@
 
 ---
 ## D. Virtualization
+### D1. Motivation
+- OS assumes total control of the hardware, but not really possible to run multiple OSes on the same hardware
+
+- OS is hard to debug and monitor
+	- how to observe the workings of an OS
+	- how to test destructive operations?
+
+> The **virtual machine** is a software emulation of the underlying hardware
+- normal OS can then run on top of a VM
+- VM is also known as a *hypervisor* with two implementation classes
+
+| Type 1                                              | Type 2                                                                      |
+| --------------------------------------------------- | --------------------------------------------------------------------------- |
+| provides individual VMs to guest OSes               | runs on the host OS and $\forall$ guest OSes run inside the Virtual Machine |
+| ![type1-hypervisor](../assets/type1-hypervisor.png) | ![type2-hypervisor](../assets/type2-hypervisor.png)                         |
