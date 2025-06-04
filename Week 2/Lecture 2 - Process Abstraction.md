@@ -124,21 +124,56 @@ int g(int i, int j)
 
 	![stack-block-diagram](../assets/stack-block-diagram.png)
 
-**Stack Frame Diagram V1**
+##### Stack Frame Diagram Version 1
 - there are different ways to setup the stack frames
 - there is no universal way as it is hardware and programming language requirement
 
 ![stack-frame-v1](../assets/stack-frame-v1.png)
 
-**Setup**
-1. Prepare to make a function call
-	- pass  parameters with the register and / or stack
-	- save the return $PC$, updated to be $PC + 4$ to the stack
+##### Setup Process
+1. **Prepare** to make a function call (Caller)
+	- pass parameters with the registers and / or stack
+	- save the return $PC$ in `$ra` $\implies$ where to point too after Callee completes execution
+		- get back to old location as indicated by the $PC$ after procedure calls
  
-2. Transfer control from the caller to the callee
-	- save the old stack pointer
+2. **Transfer control** from the caller **to the callee** (Callee)
+	- save the the registers used by the callee function, old stack pointer and frame pointer
 	- allocate space for local variables of the callee function on the stack itself
 	- adjust $SP$ to point to the new stack
 		- position of saved $SP$  is between parameters and the `return` $PC$
 
-## D. OS interaction w process
+##### Teardown Process
+1. **Return** from the function call (Callee)
+	- place the *return result*  (ret value) onto the stack where applicable, unless we are returning `void`
+	- restore to the saved Stack Pointer $SP$ value, Frame Pointer $FP$ and saved registers (see below)
+
+2. **Transfer** the **control back to the caller** using the saved $PC$ value (Caller)
+	- utilize the return result, where applicable
+	- continues execution from the caller function
+	![stack-ptr-function-return](../assets/stack-ptr-function-return.png)
+
+##### Other Information in Stack Frame
+1. **Frame Pointer**
+	- used to access various stack frame items, since stack pointer is hard to use (inherently $\Delta$)
+	- some processors provide the Frame Pointer as a dedicated register $\implies$ $FP$ usage is platform dependent
+
+	- frame pointer points to a **fixed location** in a stack frame
+		- other items are accessed using frame pointer as reference (relative displacement from the $FP$)
+
+2. **Saved Registers**
+	- *a.k.a. Callee-saved registers or register spilling*
+	
+	- since the general purpose registers of most processors are severely limited, can use memory to temporarily hold the register values
+		- MIPS has $32$ GPRs and x86 has $16$ GPRs
+
+	- can use GPRs for other purposes and then restored after the operation to be performed is completed
+		- function can spill registers that it intends to use before the function is executed and then *restore* those registers after it completes
+		- related to the scoping of variables, particularly in the context of **function-local variables** and **variable lifetimes**
+		- used to maintain the **correctness** of programs
+	
+	- is located inside the register file or the stack and can be used by the compiler
+
+##### Stack Frame Diagram Version 2
+![stack-frame-v2](../assets/stack-frame-v2.png)
+
+## D. OS interaction with process
