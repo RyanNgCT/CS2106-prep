@@ -39,6 +39,11 @@
 	- Example: Digital Equipment Corp PDP-11
 
 - Unix was developed by AT&T employees
+- the API is the same most of the time
+- has a simple architecture
+- the internals are well understood
+
+- some variants are open-source
 
 ### A5. OS on Personal Computer
 - each machine is dedicated to a user, which gives rise to the personal OS
