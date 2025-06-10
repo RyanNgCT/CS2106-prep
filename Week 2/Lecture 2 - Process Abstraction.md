@@ -61,7 +61,7 @@
 
 3. Instruction $X$ completes execution and $PC$ updated for the next instruction
 
-**Components**
+==**Components**==
 - binary executable consists two major components: instructions and data
 - information generated during program execution
 	- **Memory Context**: *text, data, stack and heap*
@@ -297,6 +297,7 @@ Given $n$ processes
 
 	![process-table](../assets/process-table.png)
 ## F. Process interaction with Operating Systems
+- done through system calls, exceptions and interrupt handlers
 ### F1. System Calls
 - are essentially an API call to the OS, which provides a way of calling facilities or services provided by the kernel
 - is **not the same** as a normal function call as have to go from user to kernel modes
@@ -357,3 +358,131 @@ int main()
 **Effects**
 - program execution is suspended
 - have to execute an interrupt handler
+
+### F5. Handling Exceptions & Interrupts
+- once an exception or interrupt occurs, we need to transfer control to handler immediately
+- return from handler routine once complete
+	- program execution can resume after that
+	- may be possible for original program to behave as if nothing happened
+
+```c
+void handler() {
+	// 1. Save the registers and CPU state
+	
+	// 2. Perform the handler subroutine
+
+	// 3. Restore the registers and CPU state
+
+	// 4. Return from the interrupt or exception
+}
+```
+
+## G. Process Abstraction in Unix
+Has the following process stages:
+1. Identification
+	- use of Process ID (`int` value to identify)
+
+2. Information
+	- contains things like process state (i.e. Running, Sleeping, Stopped, Zombie), PPID, Cumulative CPU time etc.
+
+3. Creation
+	- can create processes using the `fork()` method $\implies$ more below
+
+4. Termination
+5. Parent-Child Synchronization
+
+## H. Process Creation 
+### H1. using `fork()`
+- main way to create new processes in Unix / Linux
+	- returns `PID` of the newly created process for the parent process
+	- returns `PID` if $0$ for child processes
+	```c
+	#include <unistd.h>
+	#include <sys/types.h>
+	
+	int fork();
+	```
+
+- header files included are system dependent $\implies$ can use `man fork` to locate the appropriate system files that are required
+
+- creates new processes known as child process, which is a **duplicate** of the current executable image
+	- has the same code, same address space, but the data in the child process is a copy that is **not shared**
+
+- child process differs in terms of `PID`, `PPID` and the return value of the `fork()` method
+	```c
+	#include <stdio.h>
+	#include <sys/types.h>
+	#include <unistd.h>
+	
+	int main() {
+	    printf("I am ONE\n");
+	    fork();
+	    printf("I am seeing DOUBLE\n");
+	
+	    return 0;
+	}
+
+	// output
+	./fork0
+	I am ONE
+	I am seeing DOUBLE
+	I am seeing DOUBLE // output gets printed twice due to  forked processes
+	```
+
+- both the parent and child processes continue executing after `fork()` is invoked
+- common usage to use the parent and child processes differently
+	- parent spawns child to carry out some work, then parent can take on another order
+
+- can use the **return value of `fork()`** method to distinguish between parent and child processes
+
+- `fork()` creates some independent memory space
+##### Executing new programs
+- need to provide the full code for the child process spawned off by `fork()`
+	- technically cannot execute another existing program? $\implies$ utilize the `exec()` command instead
+	- has variants: `execv()`, `execl()`\*, `execle()` etc.
+
+##### Command-line arguments
+- pass arguments to a C program using command line arguments
+	- `argc`: \# of cmd line args including the program name itself
+	- Argument Vector (`argv`): a character (string) array and each element within `argv` is a C character string
+
+```c
+int main(int argc, char* argv) {
+	int i;
+	
+    for (i = 0; i < argc; i++){
+        printf("Arg %i: %s\n",i, argv[i] );
+    }
+    return 0;
+}
+```
+### H2. `execl()` system call
+- replace the current existing process image with new one
+	- does code replacement with PID and other info still intact
+
+- arguments
+	- `path`: the location of the executable
+	- `NULL`: indicates the end of the arg list
+```c
+#include <unistd.h>
+int execl(
+	const char *path,
+	const char *arg0,
+	...,
+	const char *argN,
+	NULL
+)
+```
+
+- example
+	- need to specify the program name as `arg0`
+```c
+#include <unistd.h>
+int execl(
+	"/bin/ls",
+	"ls",
+	"-l",
+	NULL
+)
+```
+## H3. Combining `fork()` and `exec()`
