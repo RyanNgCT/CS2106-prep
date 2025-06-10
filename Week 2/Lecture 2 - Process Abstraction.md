@@ -339,7 +339,6 @@ int main()
 
 7. Library call return to user program (via normal function return mechanism)
 ![syscall-mechanism-illustrated](../assets/syscall-mechanism-illustrated.png)
-
 ### F3. Exceptions
 - could occur when executing a machine-level instruction
 - exceptions are synchronous and occur due to program execution
@@ -358,7 +357,6 @@ int main()
 **Effects**
 - program execution is suspended
 - have to execute an interrupt handler
-
 ### F5. Handling Exceptions & Interrupts
 - once an exception or interrupt occurs, we need to transfer control to handler immediately
 - return from handler routine once complete
@@ -376,7 +374,6 @@ void handler() {
 	// 4. Return from the interrupt or exception
 }
 ```
-
 ## G. Process Abstraction in Unix
 Has the following process stages:
 1. Identification
@@ -390,7 +387,6 @@ Has the following process stages:
 
 4. Termination
 5. Parent-Child Synchronization
-
 ## H. Process Creation 
 ### H1. using `fork()`
 - main way to create new processes in Unix / Linux
@@ -474,8 +470,8 @@ int execl(
 )
 ```
 
-- example
-	- need to specify the program name as `arg0`
+**Example usage**
+- need to specify the program name as `arg0`
 ```c
 #include <unistd.h>
 int execl(
@@ -485,4 +481,47 @@ int execl(
 	NULL
 )
 ```
-## H3. Combining `fork()` and `exec()`
+### H3. Combining `fork()` and `exec()`
+- properties when we combine the two mechanisms:
+	- spawn off a child process (performing a task through `exec()`)
+	- can have the parent process is still around to accept a new request
+
+- used to get a new process running for a new program
+
+- each process has a common ancestor $\implies$ `init` process on Linux, which is created by the kernel at boot and has PID of `1`
+	- `fork()` creates the process tree
+## I. Process Termination
+- to end the execution of a process
+- status *returned to parent process* later
+	- $0 \implies$ normal successful execution and termination of the program
+	- non-zero $\implies$ problematic execution
+
+- function **does not return**
+
+- process finish execution and then **most system resources** used by process are released on exit
+	- file descriptors, which each opened file has, is released
+	- some resources are not releasable
+		- PID
+		- status required (for parent-child synchronization)
+		- process accounting info like CPU time
+
+		![process-list](../assets/process-list.png)
+### I1. Implicit `exit()`
+- most programs don't have an `exit()` 
+- a return from the `main()` program implicitly calls `exit()` $\implies$ any open files gets flushed
+### I2. Parent/Child Synchronization
+- parent process can use the `wait()` method to wait for child processes to terminate
+	- returns PID of the terminated child process and the exit status
+	- can use `NULL` if we don't need the info
+```c
+int wait(int *status);
+```
+
+- is a **blocking call**, where the parent process is blocked *until at least one child terminates*
+	- the call cleans up remainder of the child system resource $\implies$ those *not removed* on `exit()` and kill zombie process
+
+- Variants of `wait()`
+	- `waitpid()` $\implies$ wait for specific child process
+	- `waitid()` $\implies$ wait for any child process to **change status**
+
+		![process-interaction-unix](../assets/process-interaction-unix.png)
