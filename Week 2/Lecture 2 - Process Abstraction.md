@@ -276,8 +276,7 @@ addi $sp, $sp, 4
 5. **Event wait** (Running $\to$ Blocked): process requests for event that is not available or still in progress
 	- system call or awaiting for I/O
 6. **Event occurs** (Blocked $\to$ Ready): process can continue execution
-
-- each process may be in different states, with each process in different part of the state diagram
+	- each process may be in different states, with each process in different part of the state diagram
 ##### View of Process States
 Given $n$ processes
 - with $1$ CPU, $\exists \leq 1$ process in the running state, with conceptually $1$ transition at a time
@@ -518,10 +517,72 @@ int wait(int *status);
 ```
 
 - is a **blocking call**, where the parent process is blocked *until at least one child terminates*
-	- the call cleans up remainder of the child system resource $\implies$ those *not removed* on `exit()` and kill zombie process
+	- the call cleans up remainder of the child system resource $\implies$ rid child processes *not removed* on `exit()` and zombie process
 
 - Variants of `wait()`
 	- `waitpid()` $\implies$ wait for specific child process
 	- `waitid()` $\implies$ wait for any child process to **change status**
-
 		![process-interaction-unix](../assets/process-interaction-unix.png)
+
+### I3. Creating Zombie processes
+- on process exit, a child process becomes a zombie
+- cannot delete *all* process info
+	- what if parent asks for info in a `wait()` call
+	- remainder of the process data structure can be cleaned up only when `wait()` occurs
+
+- cannot kill zombie process since it is already dead
+
+###### Case 1: Parent process terminates before child
+- `init` process becomes a "pseudo" parent of child processes (is not the actual parent, delegate to ancestor)
+- child terminates sends signals to `init` and uses `wait()` for clean-up
+
+###### Case 2: Child process terminates before the parent but parent didn't call `wait()`
+- child process becomes a zombie
+- can fill up process table but requires a reboot to clear the program on older Unix boxes
+## J. Summary of process system calls
+1. **`fork()`:** process creation
+2. **`exec()` family:** change the executing image or program
+3. **`exit()`:** process termination
+4. **`wait()` family:** get the exit status and synchronize with child process, in the "suspended" state
+5. **`getpid()` family:** obtain process information
+	![process-state-diagram-unix](../assets/process-state-diagram-unix.png)
+## K. `fork()` implementation
+- intended behaviour is to "clone" its parent process
+
+**Implementation**
+1. Create the address space of the child process
+
+2. Allocate $p'$, which is the new PID
+
+3. Create kernel process data structures
+
+4. Copy the kernel environment of the parent
+
+5. Initialize the child process context
+	- `PID` = $p'$ , `PPID`, zero CPU time (?)
+
+6. Copy the memory regions from the parent via `memcpy()`$\implies$ *program, data and stack* of the program
+	- is a very expensive operation that can be optimized
+	- *Observations*: child process will not access the whole memory range right away
+		- **child process read**: location remains unchanged and use a shared version
+		- **write to location:** two independent copies required
+
+	- *Optimization:* Copy on Write
+		- only duplicates the memory location by child process **when write is required**
+		- otherwise, parent and child processes share the same memory location
+
+	- *Properties of Memory*
+		- organized into memory pages, which are contiguous sets of memory locations
+		- memory is managed in pages instead of individual locations, which is $4kB=4096B$
+
+7. Acquires shared resources such as opened files and the current working directory
+
+8. Initialize hardware context for child by copying registers and other required data from the parent process
+
+9. Child process is now ready to run (can be added to the scheduler queue)
+
+**Modern Take on `fork()`**
+- is a system call part of the Unix design that is inherited by most \*nix variants
+- not versatile as can only duplicate process fully and **not partially**
+
+- can use `clone()` as an alternative to `fork()`
