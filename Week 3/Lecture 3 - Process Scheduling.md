@@ -76,7 +76,7 @@
 		\textit{where }\text{Actual}_n &= \text{most recent CPU time consumed,}, \\
 		\text{Predicted}_n &= \text{past history of CPU time consumed,} \\
 		\text{Predicted}_{n+1} &= \text{latest prediction} \\
-		\alpha &= \text{weight on recent event}
+		\alpha &= \text{weight on recent event, where we assume this value} < 1
 		\end{aligned}
 		$$
 
@@ -86,7 +86,51 @@
 
 	- new job with shorter remaining time can be used to preempt the current running job
 		- pause current longer job and run the shorter one first
+		
 	- provides a good service of a short job even when it arrives late
 ### C2. Scheduling System
+##### Criteria
+1. **Response Time** $\to$ time between request and response by the system
+2. **Predictability** $\to$ variation in response time, less variation $\implies$ more predictable and vice versa
+##### Periodic Scheduling
+*Note:* preemptive scheduling algos are used to ensure good response time as scheduler needs to run periodically
 
+- we use a timer interrupt that goes off periodically based on the hardware clock to "take over" the CPU
+- the OS ensures that the timer interrupt **cannot be intercepted by other programs**
+##### Terminology
+> The **time quantum** is the execution duration given to a process
+- could be *constant* or *variable* among the processes
+- must be multiples of an interval 
+- large range of values
+
+> The **interval of timer interrupt** is typically $1$ms or $10$ms
+
+- no of time blocks allocated $= \frac{\text{Time Quantum}}{\text{Interval of Timer Interrupt}}$
 ## D. Scheduling Algorithms
+### D1. Round Robin
+- tasks are stored in a first in first out queue
+- the first item is dequeued and ran until either of the following is met:
+	- fixed time slice expires
+	- the task gives up the CPU voluntarily
+	- the task will block (due to I/O operations)
+
+- tasks are then placed at the end of the queue to wait for subsequent turns 
+
+- blocked tasks will be moved to another queue to wait for its request to be granted
+	- when blocked tasks are ready, then they are placed at the end of the main queue again
+
+- in essence, it is a preemptive version of FCFS algorithm
+
+- response time guarantee
+	- given $n$ tasks and the time quantum $q$, the time before the CPU gets the CPU again is $\lceil(n-1) \times q \rceil$ (bounded by this figure)
+
+- timer interrupt is required for the timer to check quantum expiry $t_0 \leq q$, where $t_0$ is the current time
+
+- choice of time quantum duration $q$ is **important**
+	- larger quantum $\to$ better CPU utilization, but longer waiting times
+	- smaller quantum $\to$ larger overhead and worse CPU utilization, but shorter waiting times
+### D2. Priority-based Scheduling
+
+### D3. Multi-Level Feedback Queue (MLFQ)
+
+### D4. Lottery Scheduling
