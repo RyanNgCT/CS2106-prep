@@ -54,7 +54,7 @@
 - easier to understand and implement 
 
 ##### Criteria
-- $\text{Turnaround Time} = \text{End Time} - \text{Start Time}$ (a.k.a. the total time taken, which is related to the waiting time for the CPU)
+- $\text{Turnaround Time} = \text{End Time} - \text{Start Time}$ (a.k.a. the total time taken, which is related to the waiting time for the CPU, which is $t_{\text{completion}} - t_{\text{arrival}}$)
 - Throughput $=$ no. of tasks completed per unit time
 - CPU Utilization $= \%$ of time when CPU is working on a task
 ##### Examples
@@ -64,11 +64,11 @@
 	- however, can have problems, which may require simple reordering (usually because of I/O bound tasks)
 
 2. **Shortest Job First (SJF)**
-	- selects the task with the smallest total CPU time as the *first to be processed*
+	- selects the task with the **smallest total CPU time** as the *first to be processed*
 	- total CPU execution time is a need to know
 		- can be estimated based on previous CPU-bound phases
 		
-	- provides a fixed set of tasks to minimize the average waiting time (reduce queueing of processes)
+	- provides a fixed set of tasks to minimize the average waiting and turnaround time (reduce queueing of processes)
 	- exponential average formula:
 		$$
 		\begin{aligned}
@@ -107,7 +107,7 @@
 
 - no of time blocks allocated $= \frac{\text{Time Quantum}}{\text{Interval of Timer Interrupt}}$
 ## D. Scheduling Algorithms
-### D1. Round Robin
+### D1. Round Robin (RR)
 - tasks are stored in a first in first out queue
 - the first item is dequeued and ran until either of the following is met:
 	- fixed time slice expires
@@ -130,7 +130,39 @@
 	- larger quantum $\to$ better CPU utilization, but longer waiting times
 	- smaller quantum $\to$ larger overhead and worse CPU utilization, but shorter waiting times
 ### D2. Priority-based Scheduling
+- prioritize more important processes as compared with the less important ones $\implies$ don't treat all of them as equal
+- assign a priority value to all the tasks and then select the one with the highest priority value
+###### Variants
+1. Preemptive version: process w higher priority preempts those running processes with lower priority
+2. Non-preemptive version: a late-coming high priority process waits for the next round of scheduling
 
+###### Starvation
+- Low priority process can **starve** because other higher priority ones can hog the CPU, which is worse comparatively in the preemptive than non-preemptive variant
+
+- Resolve by decreasing the priority of the current running process after each quantum (to make it of a higher priority in the long run)
+
+- Hard to control the exact amount of CPU allotted to processes using this priority system
+###### Priority Inversion
+- occurs when a lower priority task preempts a higher priority one, often due to I/O resource locking etc.
 ### D3. Multi-Level Feedback Queue (MLFQ)
+- is an adaptive algorithm that learns the process behaviour automatically
+- minimizes both response time for I/O-bound processes and turnaround time for CPU-bound processes
+###### Rules
+1. $\text{Priority}(A) \gt \text{Priority}(B) \implies \text{run } A$
+2. $\text{Priority}(A) = \text{Priority}(B) \implies \text{run } A \text{ and } B \text{ in round robin manner}$
 
+**Priority Settings**
+1. each new job has the highest priority
+2. if a job fully utilized its time slice, then its priority will be **reduced**
+3. if a job gives up or blocks before finishing the time slice, then its priority is **maintained**
 ### D4. Lottery Scheduling
+- providing the various lottery tickets for processes which need various system resources
+- when scheduling decision is required $\implies$ randomly choose one amongst many tickets
+	- the winning process is granted the resource in question
+
+- trend: in the long run, process holding $X\%$ of the tickets can win $X\%$ of the lottery held
+###### Properties
+1. Responsive: new processes can participate in the next lottery
+2. Good Control: process can be given $Y$ lottery tickets and distribute it to its children processes
+	- more important child process can be given more ticket (for higher chance of being selected and to control the proportion of usage)
+	- each resource can have its own set of tickets (different proportion of usage per resource, per task)

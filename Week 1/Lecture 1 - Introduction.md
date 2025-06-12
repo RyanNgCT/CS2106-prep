@@ -25,16 +25,28 @@
 ##### Improvements Required
 - Simple Batch processing is inefficient $\implies$ CPU has idle time waiting for I/O operations to be completed
 	- use of multiprogramming or time-sharing to make full use of this idle time
-### A3. Time-sharing
-##### Properties
-- allows **many users** to interact using terminals (i.e. `tty`)
-- user **job scheduling** provides the illusion of concurrency
+### A3. Multiprogramming
+- running multiple programs with the same CPU
+- w/o it, users can cannot keep the CPU and I/O devices busy at all times
+- increases CPU utilization by organizing jobs so that the CPU is occupied most of the time $\implies \uparrow$ efficiency
+- does not allow user interaction with the computer system
+### A4. Time-sharing
+- allows **many users** to interact using terminals (i.e. `tty`) while the program is still running
+	- requires an interactive system to provide direct communication (i.e. user $\leftrightarrow$ computer)
+	- $\exists$ a time gap between the user and the system since the CPU is much faster than the user
+	- technologies used to accomplish this is CPU scheduling $+$ multiprogramming
+	
+- user **job scheduling** provides the illusion of concurrency by switching amongst different jobs very frequently and quickly
+
 - handles CPU time, memory and storage (has features for memory and storage management etc.) $\implies$ sharing of these resources is also possible
-- **hardware virtualization** where each program can execute as if it has **all the resources to itself**
+
+- **hardware virtualization** where each program or process can execute as if it has **all the resources to itself**
+
+- a.k.a. *multitasking*
 
 **Examples**: CTSS developed @ MIT and Multics, the precursor to Unix
 - pushing the virtual memory and security technologies
-### A4. Minicomputer & Unix
+### A5. Minicomputer & Unix
 - Minicomputer is modelled after the mainframe, but it is a smaller and cheaper version 
 	- Example: Digital Equipment Corp PDP-11
 
@@ -45,7 +57,7 @@
 
 - some variants are open-source
 
-### A5. OS on Personal Computer
+### A6. OS on Personal Computer
 - each machine is dedicated to a user, which gives rise to the personal OS
 - different models $\to$ Single User (i.e. Windows) and General Time Sharing (Unix)
 
