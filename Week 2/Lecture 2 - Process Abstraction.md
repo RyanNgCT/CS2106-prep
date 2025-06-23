@@ -16,8 +16,9 @@
 3. *Inter-process Communication & Synchronization* - passing info btwn processes
 4. *Threads* - a.k.a. a lightweight process
 ## B. Process Abstraction
-- a process, task or job is a dynamic abstraction for executing programs
+- a process, task or job is a **dynamic abstraction** for executing programs
 	- has information required to describe running programs
+	- a process is a *kernel entity* that executes a program
 
 - *Memory Context:* contains code and data
 	- storage for instruction & data
@@ -398,7 +399,7 @@ Has the following process stages:
 	#include <unistd.h>
 	#include <sys/types.h>
 	
-	int fork();
+	pid_t fork(void);
 	```
 
 - header files included are system dependent $\implies$ can use `man fork` to locate the appropriate system files that are required
@@ -489,6 +490,8 @@ int main(int argc, char* argv) {
 - **replace** the **existing** process image with **new one**
 	- does replacement of the PID and *other info still intact* 
 	- image is **replaced** (i.e. the code, data, heap and stack) $\implies$ hence also requires a change in the process control block as well
+
+- executes the program
 
 - arguments
 	- `path`: the location, or the full path of the executable (whereas `execlp()` only requires the filename as an argument)
