@@ -6,20 +6,21 @@
 | ----------------------------------------- | ----------------------------------------------------- |
 | ![timeslicing](../assets/timeslicing.png) | ![context-switching](../assets/context-switching.png) |
 ##### Types
-- $\mathbf{1}$ **CPU** is time-sliced for the execution of $n$ tasks
+- $\mathbf{1}$ **CPU** is time-sliced for the execution of $n$ tasks (only one process can run at a time)
 - **Multiprocessor:** the timeslicing occurs on $m$ CPUs
 ## B. Process Scheduling
 - **The scheduling problem:** having $n$ tasks or processes and only $m$ CPUs occur when $n \gt m$
 	- same concept can be applied on the thread level as would be the same
 
+- scheduling is the basis of multi-programmed OSes $\implies$ makes the computer to be more productive
+
 - A typical process goes through the *phases* of:
 	- **CPU Activity:** computation like number crunching
 	- **I/O Operations**: requesting and receiving services from I/O devices
 		- majority of the time is spent as I/O bound process
-
 ### B1. Definitions & Terminology
-1. Scheduler: the part of the OS that makes the scheduling decision
-2. Scheduling Algorithm: self-explanatory (selects the process to run and allocate the CPU)
+1. **Scheduler:** the part of the OS that makes the scheduling decision
+2. **Scheduling Algorithm:** self-explanatory (selects the process to run and allocate the CPU)
 
 - each process has different requirements of the CPU time that it requires, based on **process behaviour**
 	- process environments are considered by the scheduling algos
