@@ -247,6 +247,7 @@ addi $sp, $sp, 4
 - $\exists$ a tricky scenario where heap memory is (de)allocated to create holes $\implies$ underutilization as we are not using contiguous chunks of memory
 	- free memory could be squeezed in between occupied memory blocks
 ## E. Processes
+> A **process** is a program in the state of execution.
 ### E1. Process ID (PID)
 - used to distinguish processes, to be a unique identifier
 
@@ -286,9 +287,11 @@ Given $n$ processes
 - we can have separate event queues
 ![process-state-model-alt](../assets/process-state-model-alt.png)
 ### E3. Process Control Block (PCB)
-- PCB contains the entire execution context for a process
+- PCB contains the entire execution context for a process, which contains the Program Counter $PC$
 - the kernel maintains the PCB for each individual process
 	- conceptually stored as a single table for all processes on a machine
+
+- when each process executes the `fork()` system call
 
 **Issues**
 - scalability: how many concurrent processes can we have
@@ -389,8 +392,8 @@ Has the following process stages:
 ## H. Process Creation 
 ### H1. using `fork()`
 - main way to create new processes in Unix / Linux
-	- returns `PID` of the newly created process for the parent process
-	- returns `PID` if $0$ for child processes
+	- returns **`PID` of the newly created process** in the parent process (the caller of `fork()`) $\implies$ return value 0
+	- returns `PID` if $0$ in the child process, but the child's actual PID is nonzero
 	```c
 	#include <unistd.h>
 	#include <sys/types.h>
@@ -400,9 +403,14 @@ Has the following process stages:
 
 - header files included are system dependent $\implies$ can use `man fork` to locate the appropriate system files that are required
 
-- creates new processes known as child process, which is a **duplicate** of the current executable image
-	- has the same code, same address space, but the data in the child process is a copy that is **not shared**
+- allows for multiple processes to be handled independently from one another (non-dependent on each other)
 
+- creates new processes known as child process, which is a **duplicate** of the current executable image
+	- has the same code, same address space, same state
+	- but the *data* in the child process is a copy that is **not shared** and the program counter contents are **not the same** (it is an image)
+	- whatever attributes that the parent has, the child also has
+
+**Example 1**
 - child process differs in terms of `PID`, `PPID` and the return value of the `fork()` method
 	```c
 	#include <stdio.h>
@@ -431,6 +439,32 @@ Has the following process stages:
 - can use the **return value of `fork()`** method to distinguish between parent and child processes
 
 - `fork()` creates some independent memory space
+
+**Example 2**
+```c
+int main() {
+	pid_t pid;
+	int x = 1;
+	
+	pid = fork();
+
+	if (pid == 0) {
+		printf("Child: x = %d\n", ++x);
+		exit(0);
+	}
+	printf("Parent: x = %d\n", --x);
+	exit(0);
+	
+	return 0;
+}
+```
+
+**Example 2 Diagrams**
+![example2-parent-child](../assets/example2-parent-child.png)
+
+**Example 4**
+![example4-parent-child](../assets/example4-parent-child.png)
+
 ##### Executing new programs
 - need to provide the full code for the child process spawned off by `fork()`
 	- technically cannot execute another existing program? $\implies$ utilize the `exec()` command instead
@@ -452,11 +486,12 @@ int main(int argc, char* argv) {
 }
 ```
 ### H2. `execl()` system call
-- replace the current existing process image with new one
-	- does code replacement with PID and other info still intact
+- **replace** the **existing** process image with **new one**
+	- does replacement of the PID and *other info still intact* 
+	- image is **replaced** (i.e. the code, data, heap and stack) $\implies$ hence also requires a change in the process control block as well
 
 - arguments
-	- `path`: the location of the executable
+	- `path`: the location, or the full path of the executable (whereas `execlp()` only requires the filename as an argument)
 	- `NULL`: indicates the end of the arg list
 ```c
 #include <unistd.h>
@@ -470,24 +505,30 @@ int execl(
 ```
 
 **Example usage**
-- need to specify the program name as `arg0`
+- need to specify the program name and path as `arg0`, then the subsequent ones are the command to execute
 ```c
 #include <unistd.h>
-int execl(
+execl(
 	"/bin/ls",
 	"ls",
 	"-l",
 	NULL
-)
+);
+```
+
+**Example for `execlp()`**
+```c
+execlp("date", "date", NULL);
 ```
 ### H3. Combining `fork()` and `exec()`
 - properties when we combine the two mechanisms:
-	- spawn off a child process (performing a task through `exec()`)
+	- spawn off a **child process** (performing a task through `exec()`)
+		- child process can then overlay its image with a different program
 	- can have the parent process is still around to accept a new request
 
 - used to get a new process running for a new program
 
-- each process has a common ancestor $\implies$ `init` process on Linux, which is created by the kernel at boot and has PID of `1`
+- each process has a *common ancestor* $\implies$ `init` process on Linux, which is created by the kernel at boot and has PID of `1`
 	- `fork()` creates the process tree
 ## I. Process Termination
 - to end the execution of a process
@@ -531,7 +572,6 @@ int wait(int *status);
 	- remainder of the process data structure can be cleaned up only when `wait()` occurs
 
 - cannot kill zombie process since it is already dead
-
 ###### Case 1: Parent process terminates before child
 - `init` process becomes a "pseudo" parent of child processes (is not the actual parent, delegate to ancestor)
 - child terminates sends signals to `init` and uses `wait()` for clean-up

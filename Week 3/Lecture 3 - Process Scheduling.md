@@ -34,11 +34,11 @@
 	- **Balance:** all parts of the computing system should be utilized
 ### B4. Policies
 1. **Non-preemptive**
-	- process stays scheduled until it blocks or *gives up CPU voluntarily*
+	- process stays scheduled in the running state until it blocks or *gives up CPU voluntarily*
 
 2. **Preemptive**
-	- process is provided a time quota to run, but it can block or give up the time slice early
-	- at the end of the quota, another process gets selected where available
+	- process is provided a time quota to run, but it can **block** or choose to **give up** the time slice early
+	- at the end of the quota, *another process* gets selected where available and the running process is suspended
 
 ### B5. Steps
 - scheduler is triggered and the OS takes over
@@ -153,8 +153,8 @@
 
 **Priority Settings**
 1. each new job has the highest priority
-2. if a job fully utilized its time slice, then its priority will be **reduced**
-3. if a job gives up or blocks before finishing the time slice, then its priority is **maintained**
+2. if a job fully *utilized its time slice*, then its priority will be **reduced**
+3. if a job *gives up or blocks* **before** finishing the time slice, then its priority is **maintained**
 ### D4. Lottery Scheduling
 - providing the various lottery tickets for processes which need various system resources
 - when scheduling decision is required $\implies$ randomly choose one amongst many tickets
