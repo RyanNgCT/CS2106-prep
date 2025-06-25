@@ -224,5 +224,4 @@ int main(){
     *ip = 123;  
     return 0;
 }
-
 ```

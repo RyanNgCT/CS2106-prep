@@ -28,7 +28,8 @@
 ### A3. Multiprogramming
 - running multiple programs with the same CPU
 - w/o it, users can cannot keep the CPU and I/O devices busy at all times
-- increases CPU utilization by organizing jobs so that the CPU is occupied most of the time $\implies \uparrow$ efficiency
+- **increases CPU utilization** by organizing jobs so that the CPU is occupied most of the time $\implies \uparrow$ efficiency (attempts to maximize CPU utilization)
+	- OS takes the CPU away from a blocking process and gives it to another process
 - does not allow user interaction with the computer system
 ### A4. Time-sharing
 - allows **many users** to interact using terminals (i.e. `tty`) while the program is still running

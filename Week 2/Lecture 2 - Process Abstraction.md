@@ -263,6 +263,8 @@ addi $sp, $sp, 4
 - but process can be "ready to run", but is **not actually executing**
 ##### Process Model State Diagram
 - the *set of states and transitions* are known as the process model
+	- CPUs usually alternates between CPU execution and I/O wait states $\implies$ CPU burst $\iff$ I/O burst
+	- the final CPU burst ends with a system request to terminate execution
 ![process-state-model](../assets/process-state-model.png)
 1. **New:** new process created, may still be under initialization
 2. **Ready:** the process is *waiting to run*

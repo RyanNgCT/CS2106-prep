@@ -12,36 +12,55 @@
 - **The scheduling problem:** having $n$ tasks or processes and only $m$ CPUs occur when $n \gt m$
 	- same concept can be applied on the thread level as would be the same
 
-- scheduling is the basis of multi-programmed OSes $\implies$ makes the computer to be more productive
+- **scheduling** is the act of assigning some time for doing a particular task
+
+- scheduling is the **basis** of multi-programmed OSes $\implies$ makes the computer more productive
 
 - A typical process goes through the *phases* of:
 	- **CPU Activity:** computation like number crunching
 	- **I/O Operations**: requesting and receiving services from I/O devices
 		- majority of the time is spent as I/O bound process
-### B1. Definitions & Terminology
-1. **Scheduler:** the part of the OS that makes the scheduling decision
-2. **Scheduling Algorithm:** self-explanatory (selects the process to run and allocate the CPU)
+	- a.k.a. *CPU and I/O bursts*
 
+- Selection process is carried out by the (short-term) **CPU scheduler** in the OS when the CPU becomes idle
+	- scheduler also needs to allocate CPU to the chosen process to execute at the specific time slot
+
+> The **dispatcher**\* is the module that gives the control of the CPU to the process selected by the CPU scheduler
+- has to be very quick in nature because there are lots of processes in the CPU (requires lots of process switching occurring)
+
+> **Dispatch latency**\* is the time taken for the dispatcher to stop one process and start another
+### B1. Definitions & Terminology
+> **Scheduler** is the part of the OS that makes the scheduling decision
+
+> **Scheduling Algorithm:** self-explanatory (selects the process to run and allocate the CPU)
 - each process has different requirements of the CPU time that it requires, based on **process behaviour**
 	- process environments are considered by the scheduling algos
 ### B2. Types of processing environments
-1. Batch processing $\to$ **no user interaction required** and no need to be responsive
-2. Interactive $\to$ with active user interacting w system, should be responsive and consistent with response time
-3. Real-time processing $\to$ has a deadline to meet and usually takes the form of a periodic process
+1. *Batch processing* $\to$ **no user interaction required** and no need to be responsive
+2. *Interactive* $\to$ with active user interacting w system, should be responsive and consistent with response time
+3. *Real-time processing* $\to$ has a deadline to meet and usually takes the form of a periodic process
 ### B3. Criteria
 - many criteria for evaluating scheduling algorithms
 - criteria for all processing environments
 	- **Fairness:** should get a fair share of CPU time (per process or per user basis) and also means no process starvation
 	- **Balance:** all parts of the computing system should be utilized
-### B4. Policies
+### B4. Circumstances
+![process-state-model](../assets/process-state-model.png)
+1. **Event Wait:** Process $P$ switches from *running to blocked state* (i.e. waiting for the CPU, usually I/O burst)
+2. **Release CPU:** Process $P$ switches from *running to ready state* (i.e. when interrupt occurs)
+3. **Event Occurs**: Process $P$ switches from *blocked to ready state* (i.e. completion of I/O operation)
+4. **Process Termination (exit):** Process $P$ calls `exit()`, CPU is reallocated to another process
+
+Scheduling options are available for (2) and (3). 
+### B5. Policies
+These are the ways that CPU scheduling can occur.
 1. **Non-preemptive**
 	- process stays scheduled in the running state until it blocks or *gives up CPU voluntarily*
 
 2. **Preemptive**
 	- process is provided a time quota to run, but it can **block** or choose to **give up** the time slice early
 	- at the end of the quota, *another process* gets selected where available and the running process is suspended
-
-### B5. Steps
+### B6. Steps
 - scheduler is triggered and the OS takes over
 - if context switch is required, then the current running process context is saved and placed on the blocked or ready queue
 - pick suitable process $P$ to run the base scheduling algo
@@ -53,7 +72,6 @@
 - No user interaction
 - Non-preemptive scheduling is predominant
 - easier to understand and implement 
-
 ##### Criteria
 - $\text{Turnaround Time} = \text{End Time} - \text{Start Time}$ (a.k.a. the total time taken, which is related to the waiting time for the CPU, which is $t_{\text{completion}} - t_{\text{arrival}}$)
 - Throughput $=$ no. of tasks completed per unit time
