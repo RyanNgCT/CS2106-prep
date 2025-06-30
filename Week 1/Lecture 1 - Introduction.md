@@ -1,9 +1,18 @@
 ## A. Operating Systems Basic Concepts
 > An **operating system** is a *program* that acts as an intermediary between a user and computer hardware
-- hardware itself
-- user (can be a person, or application programs)
+- In which there are two components:
+	- hardware itself
+	- user (can be a person, or application programs)
 
-- OS can exist on computers or laptops, smartphones and other hardware (i.e. game consoles and home appliances)
+- $\not \exists$ universally accepted definition
+
+- OS can exist on computers or laptops, smartphones and other hardware (i.e. game consoles and home appliances) $\implies$ aids us in "virtualizing the machine"
+##### Fundamental Functionalities of the OS
+1. Memory Management
+2. Input-Output (Device) Management
+3. CPU Scheduling
+4. Communications (and Networking)
+5. Multitasking & Multiprogramming
 ### A1. The first computers
 - they had no Operating Systems (i.e. the user program **directly interfaces** with hardware)
 	- re-programming is made by changing the physical configuration of hardware
@@ -57,7 +66,6 @@
 - the internals are well understood
 
 - some variants are open-source
-
 ### A6. OS on Personal Computer
 - each machine is dedicated to a user, which gives rise to the personal OS
 - different models $\to$ Single User (i.e. Windows) and General Time Sharing (Unix)
@@ -70,16 +78,19 @@
 
 - However, hardware in the same category is well-defined and has common functionality
 
-- choose to hide the low-level implementation details from the user
-	- users can choose to perform tasks w/o having concern about low-level implementations
+- choose to **hide the low-level implementation** or hardware details from the user / application
+	- users can choose to perform tasks w/o having concern about low-level implementations $\implies$ convenient to have this abstraction of the complex hardware devices
 	- simplifies programming through exposure of API calls
 
-- presents a common high-level functionality to the user instead
-
+**Advantages**
+- presents a common high-level functionality to the user instead $\implies$ about how the same kinds of systems stay consistent
 - provides efficiency and portability
+- provides consistent abstractions to apps, even on different hardware
+
+	![OS-abstraction](../assets/OS-abstraction.png)
 ### B2. Utility as a Resource allocator & manager
 - program execution requires many resources, which OS provides out of the box
-	- management and sharing of resources
+	- management and sharing of resources (protects and safeguards the access)
 	- arbitrates potentially conflicting requests from various processes (to ensure efficient and fair resource usage)
 	- enables for process synchronization
 
@@ -101,9 +112,9 @@
 - important to OS to be *flexible, robust and easily maintained*
 	![OS-structural-components](../assets/OS-structural-components.png)
 ##### The OS as a program
-- OS is known also as kernel
+- OS is known also as kernel (which is also the *one program* that **runs at all times**)
 - is a program with some special features as it 
-	- deals with hardware issues
+	- deals with *hardware issues*
 	- provides the system call interface ($\neq$ hardware API)
 		- is the interface between user and kernel modes
 	- has special code for interrupt handlers and device drivers

@@ -9,16 +9,22 @@
 	- replacing program A's info with that of program B
 
 > A **process** requires an abstraction to describe a running program
-
-**Topics**
+##### Topics
 1. *Process Abstraction* - info describing an executing program
 2. *Process Scheduling* - deciding which process gets to execute, when
 3. *Inter-process Communication & Synchronization* - passing info btwn processes
-4. *Threads* - a.k.a. a lightweight process
+4. *Threads* - a.k.a. a lightweight process (which is an abstraction of the processor), or more specifically a lightweight unit of execution within a process itself
+##### Components of Processes
+Each process can have:
+1. Address space
+2. $\geq 1$ thread(s) of control in the address space as above
+3. additional system *state associated* with the process
+	- open files, sockets, windows (display or monitors) etc.
 ## B. Process Abstraction
 - a process, task or job is a **dynamic abstraction** for executing programs
 	- has information required to describe running programs
-	- a process is a *kernel entity* that executes a program
+	- a process is a *kernel entity* that executes a program (i.e. each running program **runs within** its own process)
+	- provides a nicer interface as compared with raw hardware itself 
 
 - *Memory Context:* contains code and data
 	- storage for instruction & data
@@ -69,27 +75,27 @@
 		- there are many other types of memory usages as well
 	- **Hardware Context**: $GPR$, $PC$, `$sp`, `$fp` etc.
 	- **OS Context:** Process ID, Process State etc.
-## C. Function Calls
+## C. Function Calls 
 - need to decide how to allocate memory space for variables `i`, `j` and `a`?
 	- can make use of the **data** memory space
 
 	![c-code-diff](../assets/c-code-diff.png)
 ### C1. Issues
-- control flow
+- Issues with **control flow**
 	- need to jump to function body and resume when the function call is done
 	- minimally, need to store the $PC$ of the caller
 
-- data storage
+- Issues with **data storage**
 	- need to pass parameters to the function 
 	- need to capture the `return` result
 	- have local variables declaration
 
 **Steps**
-1. setup the parameters (passed in from callee)
+1. setup the parameters (passed in from caller)
 2. transfer control to the callee
 3. set up local variables
 4. store result where applicable
-5. return to caller
+5. return to caller (return value and another stuff is provided as a service to the caller program)
 
 ```c
 void f(int a, int b)
@@ -108,10 +114,10 @@ int g(int i, int j)
 ```
 
 - require new memory region that is dynamically used by function calls
-### C2. Intro to Stack Memory
+### C2. Intro to Stack Memory & Address Spaces
 - new memory region store info for function invocation $\implies$ is a special area of memory used for the storage for **temporary values**
-	- last in first out data structure
-	- useful when we don't have enough registers for storing essential values, especially when calling other subroutines
+	- *last in first out* data structure
+	- useful when we ***don't have enough registers*** for storing essential values, especially when calling other subroutines
 
 - info of function invocation is described by a stack frame
 	- `return` address
@@ -121,6 +127,9 @@ int g(int i, int j)
 - allows for more than $4$ parameters and $2$ return values to be stored at once
 
 - contains *automatic variables* (upon the invocation of a function)
+
+> The **Address Space** is the set of accessible addresses and the state associated with them
+- usually in powers of $2$
 ##### Stack Pointer `$sp`
 - points to the top of the stack region (the first unused location)
 	- most CPU has a specialized register for this purpose
@@ -225,6 +234,7 @@ addi $sp, $sp, 4
 
 ## D. Dynamically Allocated Memory
 - most programming languages support dynamically allocated memory $\implies$ the allocation of memory during execution or run time
+	- usually starts of with *less physical memory* than what the program actually ultimately requires $\implies$ page faults allocates things on the heap
 
 - Examples
 	- `malloc()` function call in C
@@ -631,3 +641,13 @@ int wait(int *status);
 - not versatile as can only duplicate process fully and **not partially**
 
 - can use `clone()` as an alternative to `fork()`
+## L. Protection Mechanisms*
+- OS helps to block processes from other processes (i.e. cannot read / write into storage or memory by the other process)
+	- isolates processes from each other
+	- results in segmentation fault in case of violation
+	
+- programmer does not need to worry about access violations etc.
+
+- OS synthesizes a protection boundary which
+	- protects process running on top of the hardware virtualization layer
+	- prevent incorrect behaviour

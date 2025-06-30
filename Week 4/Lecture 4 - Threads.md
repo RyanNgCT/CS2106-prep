@@ -6,32 +6,50 @@
 - communications between processes (IPC) $\implies$ no easy way of information passing and sharing due to processes occupying independent memory spaces
 
 - threads were invented to *overcome the problems with using processes* as a "quick hack"
+### A1. Threads
+> A **thread** is a *single ==unique==* execution context.
+- contains $PC$, registers, execution flags, stack and memory state (i.e. immediate values from computations)
+- ***executes*** on a processor core when it is *resident* (holding state of the thread) in the processor's registers
+- is a ***virtual processor core*** and is possible because we multiplex in time
 
 - main idea is to add in more threads of control to the same process so that multiple parts of the program could be executing at the same time, conceptually
 
 - A *Single threaded machine* goes through the execution of code and functions sequentially
 	- useful to instead execute multiple non-dependent functions at the same time (provided they are not reliant on each other's results)
 
-### A1. Multithreading
+> A thread is **suspended** when its state is not resident in the processor (i.e. not loaded)
+- processor state is pointing at another thread
+- $PC$ register is not pointing at the next instruction from the current thread (i.e. does not point to $PC+4$)
+### A2. Multiprogramming
+#### Thread Control Block and Context Switching*
+- the thread executes on the physical processor core itself and is saved in the chunk of memory, the *Thread Control Block* (TCB)
+
+- during a **context switch**, the $PC$, `$sp` etc. are saved in the corresponding thread's TCB (so that it can continue)
+	- context switch time can vary (should reduce to prevent thrashing)
+	- TCB contains the entries with threads that are not running (i.e. stack, heap and register data etc.)
+###### Disadvantages
+- not very secure as possible to overwrite the OS itself and bugs are quite common
+- voluntary yield of threads is not great $\implies$ if threads don't give up the CPU time, then thread hogs CPU and others cannot execute
+### A3. Multithreading 
 > A **multithreaded process** is a single process can have multiple threads
 - threads within the same process shares
 	- **memory context:** text, data, heap
 	- **OS context:** `pid`, other resources like files
 
+- simultaneous execution of threads within the same program itself
+
 **Unique information required by each thread**
 1. Identification (`tid`)
-2. Registers ($GPR$s and Special ones as well)
-3. Stack
+2. Registers ($GPR$s and special ones like $PC$ as well)
+3. Stack (which contains `$sp`)
 
-![process-n-thread-illustration](../assets/process-n-thread-illustration.png)
-
-### A2. Benefits of using Threads
+	![process-n-thread-illustration](../assets/process-n-thread-illustration.png)
+### A4. Benefits of using Threads
 1. **Economical** $\implies$ requires much fewer resources to manage as compared to multiple processes
 2. **Resource Sharing** $\implies$ the threads share the most of the resources of a process, but we don't need an additional mechanism for info sharing
 3. **Responsiveness** $\implies$ multithreaded programs can appear much more responsive
 4. **Scalability** $\implies$ multithreaded programs can take advantage of multiple CPUs
-
-### A3. Problems with using Threads
+### A5. Problems with using Threads
 1. System call concurrency
 	- parallel execution of $\geq 1$ threads $\implies$ can perform parallel system calls
 
