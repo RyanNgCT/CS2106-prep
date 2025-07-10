@@ -10,16 +10,21 @@
 > A **thread** is a *single ==unique==* execution context.
 - contains $PC$, registers, execution flags, stack and memory state (i.e. immediate values from computations)
 - ***executes*** on a processor core when it is *resident* (holding state of the thread) in the processor's registers
-- is a ***virtual processor core*** and is possible because we multiplex in time
+- is a ***virtual processor core*** 
+- multiple threads is possible because we multiplex in time
+
+- thread can either be running on the physical core or saved in the Thread Control Block (see below)
 
 - main idea is to add in more threads of control to the same process so that multiple parts of the program could be executing at the same time, conceptually
 
-- A *Single threaded machine* goes through the execution of code and functions sequentially
+- A *single threaded machine* goes through the execution of code and functions **sequentially**
 	- useful to instead execute multiple non-dependent functions at the same time (provided they are not reliant on each other's results)
 
-> A thread is **suspended** when its state is not resident in the processor (i.e. not loaded)
+> A thread is **suspended** when its state is *not resident* in the processor (i.e. not loaded)
 - processor state is pointing at another thread
-- $PC$ register is not pointing at the next instruction from the current thread (i.e. does not point to $PC+4$)
+- $PC$ register is **not** pointing at the next instruction from the current thread (i.e. does not point to $PC+4$)
+
+> A process is a protected address space with $\geq 1$ threads in it.
 ### A2. Multiprogramming
 #### Thread Control Block and Context Switching*
 - the thread executes on the physical processor core itself and is saved in the chunk of memory, the *Thread Control Block* (TCB)
@@ -38,35 +43,45 @@
 
 - simultaneous execution of threads within the same program itself
 
+- each thread should have its own **protected address space** with its own file descriptors and file systems context
+	- note that file descriptors are on a process level, which is a non-negative integer value
+	- address space is the visible part of the memory locations to the processor, and in turn the program as well for read or write operations using `lw` and `sw`
+
 **Unique information required by each thread**
 1. Identification (`tid`)
 2. Registers ($GPR$s and special ones like $PC$ as well)
-3. Stack (which contains `$sp`)
+3. Stack (which contains `$sp`) $\implies$ unique thread of execution
 
 	![process-n-thread-illustration](../assets/process-n-thread-illustration.png)
+
+- **threads** encapsulate *concurrency*
+	- enables handling of *I/O operations* and *simultaneous events* together
+
+- **address space** encapsulates *protection environment* to keep buggy programs from crashing the program
 ### A4. Benefits of using Threads
 1. **Economical** $\implies$ requires much fewer resources to manage as compared to multiple processes
 2. **Resource Sharing** $\implies$ the threads share the most of the resources of a process, but we don't need an additional mechanism for info sharing
 3. **Responsiveness** $\implies$ multithreaded programs can appear much more responsive
 4. **Scalability** $\implies$ multithreaded programs can take advantage of multiple CPUs
 ### A5. Problems with using Threads
-1. System call concurrency
+1. **System call concurrency**
 	- parallel execution of $\geq 1$ threads $\implies$ can perform parallel system calls
 
-2. Process behaviour
+2. **Process behaviour**
 	- impact on process operations
 	- `fork()` a duplicate process or thread
 	- if a single thread executes `exit()`, what would happen to the entire process?
 	- if a single thread calls `exec()`, how about threads?
-
 ## B. Thread Models
 
 ### B1. Kernel versus User Thread Models
 #### I. User thread
-- threads are implemented as a user library
+- threads are implemented as a *user library*
 	- a runtime system in the process will handled thread-related operations
 	
-- kernel does not need to be aware of threads within the process
+- kernel does **not** need to be **aware** of threads within the process
+
+- ==certain operations are **prohibited**== when running in user mode (user thread) like changing page table pointer, disabling interrupts, writing to kernel memory (i.e. RAM reserved solely for the use of the OS kernel) etc.
 
 **Advantages**
 - can have multithread program on any OS
@@ -80,12 +95,25 @@
 
 	![user-threads](../assets/user-threads.png)
 #### II. Kernel thread
-- threads are implemented in OS
-	- thread operation is handled as system calls
+- threads are implemented in OS and thread operations are handled as *system calls*
 
 - thread-level scheduling is possible because kernel schedules by threads and not processes
 
 - kernel may make use of threads for its own execution
+
+- $\exists$ carefully controlled transitions between user and kernel mode $\implies$ use of syscalls, interrupts and exceptions (which happen one after another usually)
+	- **syscall** occurs when a process requests for a system service like `exit()` which *exists outside the process itself*
+		- caller *does not have the address* of the system function to call
+	- **interrupt** occurs through *external asynchronous* event *triggers context switch* like a timer or I/O device
+	- **exception** is an *internal synchronous* event that *triggers context switch* like a protection violation (seg fault)
+	- can access system using timer interrupts, I/O requests etc.
+#### III. User and Kernel Modes
+- applications and programs run in user mode, but they must use services through API and syscalls from kernel mode to do kernel-related operations
+	- in system (kernel) mode, we have access to the full address space
+	- mode bit indication is dependent on the type of hardware as well
+![user-to-kernel-transition](../assets/user-to-kernel-transition.png)
+
+![monolithic-unix-system-components](../assets/monolithic-unix-system-components.png)
 
 **Advantages**
 - kernel can schedule on thread levels $\implies \geq 1$ thread in the same process can run simultaneously on multiple CPUs
@@ -173,7 +201,6 @@ int pthread_join( pthread_t threadID, void **status);
 ```
 - returns the value of `0` for success, returns non-zero if got error
 - `**status` is the exit value returned by the target `pthread`
-
 ### C6. Other features
 - yielding by giving up CPU voluntarily
 - advanced synchronization

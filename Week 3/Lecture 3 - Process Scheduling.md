@@ -23,7 +23,7 @@
 	- a.k.a. *CPU and I/O bursts*
 
 - Selection process is carried out by the (short-term) **CPU scheduler** in the OS when the CPU becomes idle
-	- scheduler also needs to allocate CPU to the chosen process to execute at the specific time slot
+	- scheduler also needs to *allocate CPU to the chosen process* to execute at the specific time slot (based on "timer ticks")
 
 > The **dispatcher**\* is the module that gives the control of the CPU to the process selected by the CPU scheduler
 - has to be very quick in nature because there are lots of processes in the CPU (requires lots of process switching occurring)

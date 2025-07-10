@@ -554,7 +554,7 @@ execlp("date", "date", NULL);
 - function **does not return**
 
 - process finish execution and then **most system resources** used by process are released on exit
-	- file descriptors, which each opened file has, is released
+	- ***file descriptors***, which each opened file has, is released
 	- some resources are not releasable
 		- PID
 		- status required (for parent-child synchronization)
@@ -651,3 +651,10 @@ int wait(int *status);
 - OS synthesizes a protection boundary which
 	- protects process running on top of the hardware virtualization layer
 	- prevent incorrect behaviour
+
+Program Address fits into some valid part of the program
+- We conduct some checks regarding the **physical addresses** (i.e. `base_addr`$\leq$ `prog_addr` and `prog_addr` $\lt$ `bound_addr`) and only allow program execution when it fulfils the checks above
+	- addresses are translated only when the program is loaded
+	- use the $PC$ to determine the program start address (i.e. `prog_addr`)
+	- performs the operation of **Address Space Translation**
+
