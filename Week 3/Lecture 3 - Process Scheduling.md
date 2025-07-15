@@ -112,7 +112,7 @@ These are the ways that CPU scheduling can occur.
 1. **Response Time** $\to$ time between request and response by the system
 2. **Predictability** $\to$ variation in response time, less variation $\implies$ more predictable and vice versa
 ##### Periodic Scheduling
-*Note:* preemptive scheduling algos are used to ensure good response time as scheduler needs to run periodically
+*Note:* preemptive scheduling algorithms are used to ensure good response time as scheduler needs to run periodically
 
 - we use a timer interrupt that goes off periodically based on the hardware clock to "take over" the CPU
 - the OS ensures that the timer interrupt **cannot be intercepted by other programs**

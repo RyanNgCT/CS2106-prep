@@ -25,23 +25,40 @@
 - $PC$ register is **not** pointing at the next instruction from the current thread (i.e. does not point to $PC+4$)
 
 > A process is a protected address space with $\geq 1$ threads in it.
+#### Motivation for Threading
+- helps OS to handle multiple things at once, which is required for:
+	- networking applications / servers
+	- parallel programs to achieve better performance
+	- programs with user interfaces for user responsiveness for doing computation
+	- network and disk bound programs to hide network latency
+
+- each singular thread can represent one task
+	- handle the slower I/O operations in a separate thread to avoid blocking other thread's progress $\implies$ masking of I/O latency
+#### Thread States
+- **Ready, Running or Blocked**
+	- $\text{Running} \xrightarrow{\: \text{do I/O} \:} \text{Blocked} \xrightarrow{\: \text{I/O done} \:} \text{Ready} \xrightarrow{\: \text{Continue (per scheduler and ready queue)} \:} \text{Running}$
 ### A2. Multiprogramming
+- multiple jobs or processes
+
+- **multiprogramming** ==illustrates *concurrency*== through the use of interleaving processes
+	- concurrency requires **correctness and predictability** as well, regardless of what the scheduler does (should be deterministic)
+	- usually done when there was only $1$ thread per process
+	![different-multi-concepts](../assets/different-multi-concepts.png)
 #### Thread Control Block and Context Switching*
 - the thread executes on the physical processor core itself and is saved in the chunk of memory, the *Thread Control Block* (TCB)
 
 - during a **context switch**, the $PC$, `$sp` etc. are saved in the corresponding thread's TCB (so that it can continue)
 	- context switch time can vary (should reduce to prevent thrashing)
 	- TCB contains the entries with threads that are not running (i.e. stack, heap and register data etc.)
-###### Disadvantages
-- not very secure as possible to overwrite the OS itself and bugs are quite common
-- voluntary yield of threads is not great $\implies$ if threads don't give up the CPU time, then thread hogs CPU and others cannot execute
 ### A3. Multithreading 
 > A **multithreaded process** is a single process can have multiple threads
 - threads within the same process shares
 	- **memory context:** text, data, heap
 	- **OS context:** `pid`, other resources like files
 
-- simultaneous execution of threads within the same program itself
+- simultaneous execution of threads within the same program itself, which means:
+	- scheduler is free to run threads in *any order*
+	- thread may run to completion or become time sliced
 
 - each thread should have its own **protected address space** with its own file descriptors and file systems context
 	- note that file descriptors are on a process level, which is a non-negative integer value
@@ -58,12 +75,18 @@
 	- enables handling of *I/O operations* and *simultaneous events* together
 
 - **address space** encapsulates *protection environment* to keep buggy programs from crashing the program
-### A4. Benefits of using Threads
+
+- to make a single-threaded process into a multi-threaded one, we can make use of system calls to create new threads $\implies$ new threads share the address space
+	- new threads can read and write in to each other's data $\implies$ allows for information and data sharing
+### A4. Parallelism*
+- doing multiple things simultaneously (using many processor cores), i.e. **multiprocessing**
+- does not require multiple tasks, but rather, can also split up one task to be done by multiple cores (through sub-tasks)
+### A5. Benefits of using Threads
 1. **Economical** $\implies$ requires much fewer resources to manage as compared to multiple processes
 2. **Resource Sharing** $\implies$ the threads share the most of the resources of a process, but we don't need an additional mechanism for info sharing
 3. **Responsiveness** $\implies$ multithreaded programs can appear much more responsive
 4. **Scalability** $\implies$ multithreaded programs can take advantage of multiple CPUs
-### A5. Problems with using Threads
+### A6. Problems with using Threads
 1. **System call concurrency**
 	- parallel execution of $\geq 1$ threads $\implies$ can perform parallel system calls
 
@@ -111,9 +134,9 @@
 - applications and programs run in user mode, but they must use services through API and syscalls from kernel mode to do kernel-related operations
 	- in system (kernel) mode, we have access to the full address space
 	- mode bit indication is dependent on the type of hardware as well
-![user-to-kernel-transition](../assets/user-to-kernel-transition.png)
+	![user-to-kernel-transition](../assets/user-to-kernel-transition.png)
 
-![monolithic-unix-system-components](../assets/monolithic-unix-system-components.png)
+	![monolithic-unix-system-components](../assets/monolithic-unix-system-components.png)
 
 **Advantages**
 - kernel can schedule on thread levels $\implies \geq 1$ thread in the same process can run simultaneously on multiple CPUs
@@ -126,6 +149,10 @@
 	- if *implemented with few features*, may be inflexible for some programs
 
 ![kernel-thread](../assets/kernel-thread.png)
+#### IV. The Syscall interface
+- allows one to go from user to kernel mode, follows the hour-glass idea like IP in the network stack
+- are hidden below various user-level APIs
+- syscalls are not standard across OSes. Each OS can have different types of system call interface (unless talking about POSIX standard)
 
 ### B2. Hybrid Model
 - has **both** user and kernel threads
@@ -139,7 +166,6 @@
 - threads started off as a software mechanism $\implies$ user space library
 
 > **Simultaneous multi-threading:** hardware support $\exists$ on modern processes, such as the set of general purpose registers to allow threads to run natively and in parallel on the same core
-
 ![hybrid-thread-solaris](../assets/hybrid-thread-solaris.png)
 
 ## C. Threads in Unix
