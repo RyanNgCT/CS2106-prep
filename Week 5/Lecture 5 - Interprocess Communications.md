@@ -1,4 +1,6 @@
 ## A. Motivation
+- processes can be independent (don't have any interaction between each other) or cooperating 
+
 - hard for cooperating processes to share info $\implies$ memory space is independent and IPC mechanisms are needed
 
 - IPC Mechanism
