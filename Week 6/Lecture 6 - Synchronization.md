@@ -1,8 +1,16 @@
 ## A. Race Condition
-- when $\geq 2$ processes execute concurrently in interleaving fashion or share a modifiable resources
-	- can cause synchronization problems
+- **concurrency** is the technique used by processors (alongside CPU scheduling) that distributes computing resources amongst executable entities
+	- creating of the illusion that processes are all running at once
 
-- execution of a single sequential process is **deterministic in nature**, as the repeated execution yields the same result
+- however, when $\geq 2$ processes execute concurrently in *interleaving fashion* or share modifiable resources $\implies$ can cause synchronization problems
+	- whereby processes are **no longer independent** and require interaction
+
+- execution of a *single sequential process* is **deterministic in nature**, as the repeated execution yields the same result
+	- each line of code **doesn't** always **correspond to only one instruction** when compiled ($\geq 1$ instruction per line of code)
+	- most operations in source code, i.e. declaration $+$ assignment requires multiple CPU steps
+	```c
+	int c = a + b;
+	```
 
 - Race Conditions: execution of concurrent process **may not be deterministic** and the outcomes depends on the order which the shared resource is accessed or modified
 	- $P_1$ and $P_2$ modify the same variable value

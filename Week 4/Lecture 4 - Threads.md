@@ -8,23 +8,32 @@
 - threads were invented to *overcome the problems with using processes* as a "quick hack"
 ### A1. Threads
 > A **thread** is a *single ==unique==* execution context.
+- basic unit of CPU utilization, in other words
+#### Properties
 - contains $PC$, registers, execution flags, stack and memory state (i.e. immediate values from computations)
 - ***executes*** on a processor core when it is *resident* (holding state of the thread) in the processor's registers
 - is a ***virtual processor core*** 
-- multiple threads is possible because we multiplex in time
+
+- multiple threads are possible because we can multiplex in time
 
 - thread can either be running on the physical core or saved in the Thread Control Block (see below)
 
-- main idea is to add in more threads of control to the same process so that multiple parts of the program could be executing at the same time, conceptually
+- are a way to inform the OS that specific portions of a program can be concurrently executed
 
-- A *single threaded machine* goes through the execution of code and functions **sequentially**
-	- useful to instead execute multiple non-dependent functions at the same time (provided they are not reliant on each other's results)
+- threads can share a memory space with other threads of the **same process**, but they cannot share the same CPU state
+	- need to save or capture CPU state (i.e. registers and stack pointer) in each individual thread $\implies$ see point A3 below
+	- do not want incorrect data being access or written to
+	- can read from or write to other thread's stack
+	![thread-memory-interactions](../assets/thread-memory-interactions.png)
 
 > A thread is **suspended** when its state is *not resident* in the processor (i.e. not loaded)
 - processor state is pointing at another thread
 - $PC$ register is **not** pointing at the next instruction from the current thread (i.e. does not point to $PC+4$)
-
-> A process is a protected address space with $\geq 1$ threads in it.
+#### Process
+> A **process** is a *protected address space* with $\geq 1$ threads in it.
+- the *set of registers* (be it General Purpose or special ones) carry the state of a process
+- can also be defined as a program in execution (but doesn't have to always to be using the CPU)
+- cannot employ concurrency within the **same process**, if we *disregard threads* $\implies$ cannot have asynchronous functionality of running two or more tasks (CPU can only be allocated to one function per process at once)
 #### Motivation for Threading
 - helps OS to handle multiple things at once, which is required for:
 	- networking applications / servers
@@ -32,11 +41,19 @@
 	- programs with user interfaces for user responsiveness for doing computation
 	- network and disk bound programs to hide network latency
 
-- each singular thread can represent one task
+- each singular thread can be used to *represent one task*
 	- handle the slower I/O operations in a separate thread to avoid blocking other thread's progress $\implies$ masking of I/O latency
 #### Thread States
 - **Ready, Running or Blocked**
 	- $\text{Running} \xrightarrow{\: \text{do I/O} \:} \text{Blocked} \xrightarrow{\: \text{I/O done} \:} \text{Ready} \xrightarrow{\: \text{Continue (per scheduler and ready queue)} \:} \text{Running}$
+#### Other notable points
+- each thread doesn't contain code, but rather points to executable code  in `.text` through the unique $PC$ value $\implies$ not dangerous because `.text` is not write-able
+
+- main idea is to add in more threads to the *same given process* so that multiple parts of the program could be executing **at the same time**, conceptually
+	- allows us to address the shortfalls of using processes and IPC
+
+- A *single threaded machine* goes through the execution of code and functions **sequentially**
+	- useful to instead execute multiple non-dependent functions at the same time (provided they are not reliant on each other's results)
 ### A2. Multiprogramming
 - multiple jobs or processes
 
@@ -47,8 +64,11 @@
 #### Thread Control Block and Context Switching*
 - the thread executes on the physical processor core itself and is saved in the chunk of memory, the *Thread Control Block* (TCB)
 
+> A **context switch** involves storing the state of a process or thread, so that it can be restored and execution can be resumed at a later point in time, and then restoring a different, previously saved state
 - during a **context switch**, the $PC$, `$sp` etc. are saved in the corresponding thread's TCB (so that it can continue)
-	- context switch time can vary (should reduce to prevent thrashing)
+	- context switch time can *vary* (should reduce to prevent thrashing) $\implies$ incurs *time* and *resource* overhead
+		- $\exists$ context switches when a system call is made by a thread or process
+
 	- TCB contains the entries with threads that are not running (i.e. stack, heap and register data etc.)
 ### A3. Multithreading 
 > A **multithreaded process** is a single process can have multiple threads
@@ -63,8 +83,7 @@
 - each thread should have its own **protected address space** with its own file descriptors and file systems context
 	- note that file descriptors are on a process level, which is a non-negative integer value
 	- address space is the visible part of the memory locations to the processor, and in turn the program as well for read or write operations using `lw` and `sw`
-
-**Unique information required by each thread**
+##### Unique Thread Components
 1. Identification (`tid`)
 2. Registers ($GPR$s and special ones like $PC$ as well)
 3. Stack (which contains `$sp`) $\implies$ unique thread of execution
@@ -76,15 +95,36 @@
 
 - **address space** encapsulates *protection environment* to keep buggy programs from crashing the program
 
-- to make a single-threaded process into a multi-threaded one, we can make use of system calls to create new threads $\implies$ new threads share the address space
-	- new threads can read and write in to each other's data $\implies$ allows for information and data sharing
+- to make a single-threaded process into a multi-threaded one, we can make use of *system calls* to create new threads $\implies$ new threads share the address space
+	- new threads can **read and write** into each other's data and stack $\implies$ allows for information and data sharing
+	- usually the case for most OSes where **threads are spawned dynamically** from the `main` thread $\implies$ single to multiple threads, created at runtime as required
+		![thread-creation](../assets/thread-creation.png)
+
+- In most systems, when terminating a main thread of a program with `exit()`, other child/spawned threads will also terminate
 ### A4. Parallelism*
-- doing multiple things simultaneously (using many processor cores), i.e. **multiprocessing**
+- doing multiple things simultaneously (using *many processor cores*), i.e. **multiprocessing**
 - does not require multiple tasks, but rather, can also split up one task to be done by multiple cores (through sub-tasks)
+- more than one core can do some tasks truly simultaneously $\implies$ assignment of each core to a specific thread or process
+
+- can have ***concurrency without parallelism*** in single-core multi-threaded machines, which are interleaved using time-slicing
+	- CPU should be able to interleave multiple tasks, with only one task running at once
+
+- can also have ***parallelism without concurrency*** when tasks are independent of each other and can run in isolation
+
+- Note: If a system has $N$ cores $\implies \leq N$ **threads** can execute in parallel since threads compete for resources and the number of cores $N$ is **fixed**
+
+##### Advantages of Parallelism
+- smoothness of multitasking *less reliant* on fast interleaving execution
+- *improves performance* (i.e. total time needed for task to run to completion)
 ### A5. Benefits of using Threads
 1. **Economical** $\implies$ requires much fewer resources to manage as compared to multiple processes
-2. **Resource Sharing** $\implies$ the threads share the most of the resources of a process, but we don't need an additional mechanism for info sharing
+2. **Resource Sharing** $\implies$ the threads share most of the resources of a process, but we don't need an additional mechanism for info sharing
+	- occurs when the goal of the threads are *very much correlated*
+	- i.e. having multiple request handler threads for multiple clients, using concurrency (i.e. making it feel like processes are running simultaneously through incredible speed of switching between them)
+
 3. **Responsiveness** $\implies$ multithreaded programs can appear much more responsive
+	- system calls taken to create new threads are faster than that of to create new processes
+
 4. **Scalability** $\implies$ multithreaded programs can take advantage of multiple CPUs
 ### A6. Problems with using Threads
 1. **System call concurrency**
@@ -127,10 +167,16 @@
 - $\exists$ carefully controlled transitions between user and kernel mode $\implies$ use of syscalls, interrupts and exceptions (which happen one after another usually)
 	- **syscall** occurs when a process requests for a system service like `exit()` which *exists outside the process itself*
 		- caller *does not have the address* of the system function to call
+		- syscalls are the APIs that are provided by the OS, to allow requests OS-specific operations
+
 	- **interrupt** occurs through *external asynchronous* event *triggers context switch* like a timer or I/O device
+	
 	- **exception** is an *internal synchronous* event that *triggers context switch* like a protection violation (seg fault)
+	
 	- can access system using timer interrupts, I/O requests etc.
 #### III. User and Kernel Modes
+- kernel mode exists to ensure that programs **do not** have direct access to hardware (for security reasons)
+
 - applications and programs run in user mode, but they must use services through API and syscalls from kernel mode to do kernel-related operations
 	- in system (kernel) mode, we have access to the full address space
 	- mode bit indication is dependent on the type of hardware as well
@@ -151,7 +197,7 @@
 ![kernel-thread](../assets/kernel-thread.png)
 #### IV. The Syscall interface
 - allows one to go from user to kernel mode, follows the hour-glass idea like IP in the network stack
-- are hidden below various user-level APIs
+- are hidden below various user-level or OS-level APIs (i.e. `libc`)
 - syscalls are not standard across OSes. Each OS can have different types of system call interface (unless talking about POSIX standard)
 
 ### B2. Hybrid Model

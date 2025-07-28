@@ -216,7 +216,6 @@ addi $sp, $sp, 4
 		- used to maintain the **correctness** of programs
 	
 	- is located inside the *register file or the stack* and can be used by the compiler
-
 ##### Stack Frame Diagram Version 2
 - *parameters* are to be **passed into** the callee function and *return value* are to be **passed out** of the callee function, back to the caller for further computation
 	- the return values could be a modified version of the parameters (if any), or that the return value depend on the parameters supplied
@@ -233,31 +232,40 @@ addi $sp, $sp, 4
 ![stack-frame-v2](../assets/stack-frame-v2.png)
 
 ## D. Dynamically Allocated Memory
-- most programming languages support dynamically allocated memory $\implies$ the allocation of memory during execution or run time
-	- usually starts of with *less physical memory* than what the program actually ultimately requires $\implies$ page faults allocates things on the heap
+- most programming languages support **dynamically allocated memory** $\implies$ the allocation of memory during execution or run time
+	- usually starts of with *less physical memory* than what the program actually ultimately requires $\implies$ page faults allocates stuff onto the heap
+	- can be allocated dynamically through the **use of system calls** (request for memory through syscalls), which takes up resources and incurs a significant **performance penalty**
+		- creates the **problem of external fragmentation** (whereby $\not \exists$ a contiguous space in the heap to store a large array, for instance)
+		- problem can be solved using data structures, such as a linked list, but creates the problem of cache misses (recall from CS2100)
 
 - Examples
 	- `malloc()` function call in C
 	- `new` keyword in Java / C++ to initialize 
 #### Motivation
 - cannot use **data** or **stack** memory because of
-	- allocation of memory only at runtime, no static memory address location $\implies$ cannot place into **data** memory region
-	- no definite deallocation timing $\implies$ cannot place in **stack** memory region
+	- allocation of memory only at runtime, no static memory address location $\implies$ **cannot place** into **data memory** region
+	- if we have no definite deallocation timing $\implies$ cannot place in stack memory region
+	- memory is **too large** to be meaningfully stored onto the stack
 
-- require a separate space to store these dynamically allocated items, contains the "data" maintained by `malloc()` and `free()`
-	- usually used for pointer variables
-	- is shared amongst all threads, shared libraries and DLL modules
+- require a separate space to store these dynamically allocated items, contains the "data" maintained by `malloc(n)` and `free(ptr)`
+	- is **shared** amongst all threads, shared libraries and DLL modules
+	- `malloc()` takes parameter of size `n` (ensures the block to store the data is at least `n` units long)
+	- `free()` takes in a pointer as parameter to memory region to be cleared $\implies$ mark region as free
 
 	![memory-space-model](../assets/memory-space-model.png)
 
 #### Managing Heap Memory
 - harder, given the variable size of data that is stored inside the heap
+	- allocations and deallocation requires the searching for available / occupied sub-regions in memory, which is time consuming
+
 - there is a variable allocation and deallocation timings, as compared with stack and data memory
 	- must be explicitly managed using `malloc()` and `free()` calls (instead of manual push and pop in the stack when a function is invoked / returns)
 
 - $\exists$ a tricky scenario where heap memory is (de)allocated to create holes $\implies$ underutilization as we are not using contiguous chunks of memory
 	- free memory could be squeezed in between occupied memory blocks
-## E. Processes
+
+- harder to manage the data stored on the heap itself because data is not always compacted (unlike the stack) and is unpredictably stored $\implies$ has **no ordering** or organization
+## E. Processes 
 > A **process** is a program in the state of execution.
 ### E1. Process ID (PID)
 - used to distinguish processes, to be a unique identifier
@@ -305,8 +313,10 @@ Given $n$ processes
 	- conceptually stored as a single table for all processes on a machine
 
 - when each process executes the `fork()` system call
-
-**Issues**
+##### Components
+- each PCB has individual elements such as the $PC$, registers, stack etc. (refers to each process)
+![process-control-block](../assets/process-control-block.png)
+##### Issues
 - scalability: how many concurrent processes can we have
 - efficiency: how do we provide efficient access to each block, with minimal space wastage
 
