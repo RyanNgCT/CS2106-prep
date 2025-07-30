@@ -32,7 +32,7 @@
 #### Process
 > A **process** is a *protected address space* with $\geq 1$ threads in it.
 - the *set of registers* (be it General Purpose or special ones) carry the state of a process
-- can also be defined as a program in execution (but doesn't have to always to be using the CPU)
+- can also be defined as a program in execution or in motionj (but doesn't have to always to be using the CPU)
 - cannot employ concurrency within the **same process**, if we *disregard threads* $\implies$ cannot have asynchronous functionality of running two or more tasks (CPU can only be allocated to one function per process at once)
 #### Motivation for Threading
 - helps OS to handle multiple things at once, which is required for:
@@ -64,12 +64,20 @@
 #### Thread Control Block and Context Switching*
 - the thread executes on the physical processor core itself and is saved in the chunk of memory, the *Thread Control Block* (TCB)
 
-> A **context switch** involves storing the state of a process or thread, so that it can be restored and execution can be resumed at a later point in time, and then restoring a different, previously saved state
+> A **context switch** involves *storing* the state of an existing process or thread, so that it can be restored and execution can be resumed at a later point in time, and then restoring a different, previously saved state
 - during a **context switch**, the $PC$, `$sp` etc. are saved in the corresponding thread's TCB (so that it can continue)
-	- context switch time can *vary* (should reduce to prevent thrashing) $\implies$ incurs *time* and *resource* overhead
-		- $\exists$ context switches when a system call is made by a thread or process
+	- context switch time can *vary* (should reduce to prevent thrashing) $\implies$ incurs *time and resource overhead*
+		- occurs when there is a **system call** or triggering a software interrupt voluntarily
+		- also can occur due to blocking I/O
 
 	- TCB contains the entries with threads that are not running (i.e. stack, heap and register data etc.)
+
+	- once timer (clock) is done, the $PC$ value is overwritten to jump to a new memory location which contains code needed to handle the interrupt
+
+- interrupted process (for context switch) state needs to be *saved* somewhere (usually in RAM) and new process state to be loaded (from memory to registers) $\implies$ allow subsequent process to take over without incorrect execution
+	- can use multiple register sets to save the program state $\implies$ need to ensure for $m$ processes with $n$ register sets that $m \leq n$, since $n$ is **finite**
+		- actually requires only two register sets (i.e. $n = 2$) $\implies$ one for user mode and the other for kernel mode, provided that the processor supports these two modes
+
 ### A3. Multithreading 
 > A **multithreaded process** is a single process can have multiple threads
 - threads within the same process shares

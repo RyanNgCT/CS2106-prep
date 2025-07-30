@@ -1,9 +1,9 @@
 ## A. Race Condition
-- **concurrency** is the technique used by processors (alongside CPU scheduling) that distributes computing resources amongst executable entities
-	- creating of the illusion that processes are all running at once
+> **concurrency** is the technique used by processors (alongside CPU scheduling) that distributes computing resources amongst executable entities
+- creates the illusion that the processes are all running at once
 
 - however, when $\geq 2$ processes execute concurrently in *interleaving fashion* or share modifiable resources $\implies$ can cause synchronization problems
-	- whereby processes are **no longer independent** and require interaction
+	- whereby processes are **no longer independent** and *require interaction*
 
 - execution of a *single sequential process* is **deterministic in nature**, as the repeated execution yields the same result
 	- each line of code **doesn't** always **correspond to only one instruction** when compiled ($\geq 1$ instruction per line of code)

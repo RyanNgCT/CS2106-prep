@@ -1,10 +1,16 @@
 ## A. Intro to Process Management
 ### A1. Motivation
+> A **process** is a program ==in execution==. 
+- note that process $\neq$ program
+- program is a *sequence of executable instructions (`.text`) and data (`.data`)* needed by the processor to accomplish a specific task (is a passive entity)
+- memory layout of a process varies from that of its state as a passive program entity
+- process is an *active entity*
+
 - OS is expected to have efficient use of the hardware resource (managing programs executing on hardware)
 - how do we utilize hardware resources effectively if **only when program executes at a time** (no concurrency)
 	- allow for multiple programs to *share* the *same hardware processes*
 ### A2. Properties
-- Program switching by the OS requires the following
+- Program Switching by the OS requires the following
 	- information regarding execution of program A (to be stored)
 	- replacing program A's info with that of program B
 
@@ -130,6 +136,7 @@ int g(int i, int j)
 
 > The **Address Space** is the set of accessible addresses and the state associated with them
 - usually in powers of $2$
+- is the memory region that has been allocated to a particular process
 ##### Stack Pointer `$sp`
 - points to the top of the stack region (the first unused location)
 	- most CPU has a specialized register for this purpose
