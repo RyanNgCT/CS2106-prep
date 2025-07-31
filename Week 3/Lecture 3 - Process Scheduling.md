@@ -1,6 +1,8 @@
 ## A. Concurrent Execution
+> **Parallelism** is the simultaneous execution of multiple tasks or subtasks by multiple processing units, such as multi-core processors or multiple CPUs, to improve performance and efficiency.
+
 - concept for multi-tasked processes
-	- virtual or physical parallelism $\implies$ assume both of them are the same 
+	- virtual or physical parallelism $\implies$ assume both of them are the same in this context
 
 | Concurrency via Time-slicing              | Interleaved Execution via context switching           |
 | ----------------------------------------- | ----------------------------------------------------- |
@@ -12,21 +14,34 @@
 - **The scheduling problem:** having $n$ tasks or processes and only $m$ CPUs occur when $n \gt m$
 	- same concept can be applied on the thread level as would be the same
 
-- **scheduling** is the act of assigning some time for doing a particular task
+- **scheduling** is the act of assigning some time for doing a particular task and is a technique used by the OS to determine which task or process gets to use the CPU at a given time, based on *some specific criteria*
+	- CPU utilization $\implies \%$ of time whereby the CPU is *actively executing processes*
+	- Throughput
+	- Turnaround Time
+	- Waiting Time $\implies$ time that a process spends on the queue to wait for the CPU (Ready State)
+	- Response Time
 
 - scheduling is the **basis** of multi-programmed OSes $\implies$ makes the computer more productive
 
 - A typical process goes through the *phases* of:
-	- **CPU Activity:** computation like number crunching
+	- **CPU Activity:** computation like number crunching (will definitely be the first time lapse in any given process execution)
 	- **I/O Operations**: requesting and receiving services from I/O devices
 		- majority of the time is spent as I/O bound process
-	- a.k.a. *CPU and I/O bursts*
+	- a.k.a. *CPU and I/O bursts* $\implies$ **time lapses** taken to complete CPU or I/O tasks respectively
 
+- Most processes have many short CPU bursts and only a few long CPU bursts $\implies$ scheduling algo needs to account for long I/O burst (waiting or idle time)
+	- CPU should be allocated to other process that isn't waiting for I/O operation during the long idle periods to ensure CPU is **effectively utilized**
+#### IO and CPU bound
+![IO-CPU-bound](../assets/IO-CPU-bound.png)
+#### Key Components - Scheduler & Dispatcher
+> **Scheduler** determines which process should use the CPU next, through the use of scheduling policy to manage the ready queue.
 - Selection process is carried out by the (short-term) **CPU scheduler** in the OS when the CPU becomes idle
 	- scheduler also needs to *allocate CPU to the chosen process* to execute at the specific time slot (based on "timer ticks")
 
 > The **dispatcher**\* is the module that gives the control of the CPU to the process selected by the CPU scheduler
-- has to be very quick in nature because there are lots of processes in the CPU (requires lots of process switching occurring)
+- has to be *very quick in nature* because there are lots of processes in the CPU (requires lots of process switching occurring) $\implies$ however **dispatch latency** (time needed to stop one process and start another is inevitable (see below), though usually not illustrated
+- gives control of the CPU to the process at the head of the ready queue
+- highly optimized component of the OS
 
 > **Dispatch latency**\* is the time taken for the dispatcher to stop one process and start another
 ### B1. Definitions & Terminology
@@ -50,8 +65,22 @@
 2. **Release CPU:** Process $P$ switches from *running to ready state* (i.e. when interrupt occurs)
 3. **Event Occurs**: Process $P$ switches from *blocked to ready state* (i.e. completion of I/O operation)
 4. **Process Termination (exit):** Process $P$ calls `exit()`, CPU is reallocated to another process
+	- may not be possible for web server processes which are designed to constantly alternate between ready, running and blocked/waiting
+![process-state-model-alt](../assets/process-state-model-alt.png)
 
 Scheduling options are available for (2) and (3). 
+
+**Alternate Diagram**
+- process in other states other than running are technically "waiting" as well in some form of queue
+- queues are used to manage the execution order of processes
+![process-state-model-alt2](../assets/process-state-model-alt2.png)
+
+**Usage of the dispatcher is shown below**
+- allocate the CPU to the first process in the *ready queue* $\implies$ i.e. perform the context switch
+- PCB structure of a given process is saved in the ready queue and this contains the CPU state (inclusive of registers and $PC$) which can be restored once the process to resume execution in the running state
+- if supported, dispatcher is also responsible for switching back to user mode before handler control to the process
+
+![dispatcher](../assets/dispatcher.png)
 ### B5. Policies
 These are the ways that CPU scheduling can occur.
 1. **Non-preemptive**
@@ -77,36 +106,68 @@ These are the ways that CPU scheduling can occur.
 - Throughput $=$ no. of tasks completed per unit time
 - CPU Utilization $= \%$ of time when CPU is working on a task
 ##### Examples
-1. **First Come First Served (FCFS)**
-	- guaranteed to have no starvation as \# tasks in front of task $x$ in FIFO queue is ***always decreasing***
+###### 1. First Come First Served (FCFS)
+- CPU is allocated to the first process that requests for it
+	- "CPU is allocated to process $x$" $\implies PC$ value is at the `.text` section  of the process, which enables the CPU to execute instructions
+	- any form of *context switching* means that the $PC$ value is updated to a new section 
+
+- process itself is not pushed into the FIFO queue (since they are not discrete data structures) but rather, the **Process Control Block structures** of each process are pushed into this queue
+
+- guaranteed to have no starvation as \# tasks in front of task $x$ in FIFO queue is ***always decreasing***
 	- task $x$ which is in the queue, will eventually get its CPU time
-	- however, can have problems, which may require simple reordering (usually because of I/O bound tasks)
+	- this condition is guaranteed based on the arrival order
+	
+- Convoy Effect may require simple reordering (usually because of multiple I/O bound tasks and 1 or 2 slow CPU bound tasks)
+	- I/O bound tasks sit idle in the ready queue while waiting for CPU-bound process to complete $\implies$ let the tasks that require shorter CPU burst (time in the CPU) go first
 
-2. **Shortest Job First (SJF)**
-	- selects the task with the **smallest total CPU time** as the *first to be processed*
-	- total CPU execution time is a need to know
-		- can be estimated based on previous CPU-bound phases
-		
-	- provides a fixed set of tasks to minimize the average waiting and turnaround time (reduce queueing of processes)
-	- exponential average formula:
-		$$
-		\begin{aligned}
-		\textbf{Predicted}_{n + 1} &= \left(\alpha \times \textbf{Actual}_n \right)+ \left((1 - \alpha) \times \textbf{Predicted}_n \right) \\\\
-		\textit{where }\text{Actual}_n &= \text{most recent CPU time consumed,}, \\
-		\text{Predicted}_n &= \text{past history of CPU time consumed,} \\
-		\text{Predicted}_{n+1} &= \text{latest prediction} \\
-		\alpha &= \text{weight on recent event, where we assume this value} < 1
-		\end{aligned}
-		$$
+- problems occur when we have processes that are *designed to run indefinitely*, without termination $\implies$ results in delays
+	- i.e. using `syscall` for I/O operation waits etc.
 
-3. **Shortest Remaining Time Next (SRTN)**
-	- is a variant of SJF, but we use the remaining time and is **preemptive**
-	- selection of the job with the shortest (expected) time remaining
+- manages the next CPU burst
+	![fcfs-processing](../assets/fcfs-processing.png)
+###### 2. Shortest Job First (SJF)
+- selects the task with the **smallest total CPU time** as the *first to be processed* (smallest next CPU burst)
 
-	- new job with shorter remaining time can be used to preempt the current running job
-		- pause current longer job and run the shorter one first
-		
-	- provides a good service of a short job even when it arrives late
+- **total CPU execution time** is a need to know
+	- can be *estimated* based on previous CPU-bound phases (impossible to determine for sure)
+	- if two processes have the same burst length, then FCFS is used as the tie-breaker
+	
+- implementation is done using a priority queue, allows processes with shorter burst to overtake that of longer CPU burst
+
+- provides a fixed set of tasks to **minimize the average waiting time** (reduce queueing of processes)
+	- enables for the minimum average waiting time per process
+	- impossible to *implement perfectly*
+
+- exponential average formula:
+	- $\alpha = 0 \implies$ prediction depends on past events, *excluding* the most recent event $n$ (i.e. $[0 \:, n-1]$)
+	- $\alpha = 1 \implies$ prediction depends solely on most recent event (only $n$)
+	- common to make $0 \lt \alpha \lt 1$
+$$
+	\begin{aligned}
+	\textbf{Predicted}_{n + 1} &= \left(\alpha \times \textbf{Actual}_n \right)+ \left((1 - \alpha) \times \textbf{Predicted}_n \right) \\\\
+	\textit{where } n &= \text{the most recent CPU burst,} \\
+	\text{Actual}_n &= \text{most recent CPU time consumed / observed,} \\
+	\text{Predicted}_n &= \text{past history of CPU time consumed,} \\
+	\text{Predicted}_{n+1} &= \text{latest CPU burst (i.e. \textbf{prediction}),} \\
+	\alpha &= \text{weight on recent event, where we assume this value} < 1
+	\end{aligned}
+	$$
+- up to *scheduler policy* to decide whether to interrupt process that takes longer to complete and swap out for new I/O bound process that has arrived in ready queue
+	- preemptive or non-preemptive
+
+![SJF-illustration](../assets/SJF-illustration.png)
+- let $P_1, \ldots, P_4$ overtake $P_5$ whenever they are in the ready queue
+
+> **Starvation** occurs when the *scheduling policy* causes a process to wait *indefinitely* in the ready queue (i.e. cannot go to running state)
+- usually occurs to process that is CPU-bound and requires lots of time in the CPU (high CPU burst)
+###### 3. Shortest Remaining Time Next (SRTN)
+- is a variant of SJF, but we use the remaining time and is **preemptive**
+- selection of the job with the shortest (expected) time remaining
+
+- new job with shorter remaining time can be used to preempt the current running job
+	- pause current longer job and run the shorter one first
+	
+- provides a good service of a short job even when it arrives late
 ### C2. Scheduling System
 ##### Criteria
 1. **Response Time** $\to$ time between request and response by the system
@@ -117,17 +178,21 @@ These are the ways that CPU scheduling can occur.
 - we use a timer interrupt that goes off periodically based on the hardware clock to "take over" the CPU
 - the OS ensures that the timer interrupt **cannot be intercepted by other programs**
 ##### Terminology
-> The **time quantum** is the execution duration given to a process
-- could be *constant* or *variable* among the processes
-- must be multiples of an interval 
-- large range of values
+> The **time quantum** is the fixed time slice given to each process in a preemptive scheduling algorithm (like Round Robin).
+- It is *typically constant* for all processes in a system (but could be variable in some systems)
+- It is usually chosen as a *multiple of the system clock interval* (interval of timer interrupt)
+- It is *not arbitrarily large* — while it can be tuned, very *large* time quantums reduce preemption and essentially turn Round Robin into FCFS.
+- Very *small* time quantums increase context switching overhead.
 
 > The **interval of timer interrupt** is typically $1$ms or $10$ms
-
 - no of time blocks allocated $= \frac{\text{Time Quantum}}{\text{Interval of Timer Interrupt}}$
 ## D. Scheduling Algorithms
 ### D1. Round Robin (RR)
-- tasks are stored in a first in first out queue
+- tasks are stored in a first in first out (FIFO) queue
+- is a preemptive scheduling algorithm $\implies$ allows for process switching
+
+- small unit of time, a time quantum or slice is arbitrarily defined
+
 - the first item is dequeued and ran until either of the following is met:
 	- fixed time slice expires
 	- the task gives up the CPU voluntarily
@@ -154,7 +219,6 @@ These are the ways that CPU scheduling can occur.
 ###### Variants
 1. Preemptive version: process w higher priority preempts those running processes with lower priority
 2. Non-preemptive version: a late-coming high priority process waits for the next round of scheduling
-
 ###### Starvation
 - Low priority process can **starve** because other higher priority ones can hog the CPU, which is worse comparatively in the preemptive than non-preemptive variant
 

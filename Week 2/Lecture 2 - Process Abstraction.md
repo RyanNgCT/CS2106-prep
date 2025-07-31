@@ -2,9 +2,9 @@
 ### A1. Motivation
 > A **process** is a program ==in execution==. 
 - note that process $\neq$ program
-- program is a *sequence of executable instructions (`.text`) and data (`.data`)* needed by the processor to accomplish a specific task (is a passive entity)
+- **program** is a *sequence of executable instructions (`.text`) and data (`.data`)* needed by the processor to accomplish a specific task (is a **passive** entity)
 - memory layout of a process varies from that of its state as a passive program entity
-- process is an *active entity*
+- **process** is an ***active entity***
 
 - OS is expected to have efficient use of the hardware resource (managing programs executing on hardware)
 - how do we utilize hardware resources effectively if **only when program executes at a time** (no concurrency)
