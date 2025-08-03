@@ -15,11 +15,11 @@
 	- same concept can be applied on the thread level as would be the same
 
 - **scheduling** is the act of assigning some time for doing a particular task and is a technique used by the OS to determine which task or process gets to use the CPU at a given time, based on *some specific criteria*
-	- CPU utilization $\implies \%$ of time whereby the CPU is *actively executing processes*
-	- Throughput
-	- Turnaround Time
-	- Waiting Time $\implies$ time that a process spends on the queue to wait for the CPU (Ready State)
-	- Response Time
+	- **CPU utilization** $\implies \%$ of time whereby the CPU is *actively executing processes*
+	- **Throughput** $\implies \#$ processes completed per time unit
+	- **Turnaround Time** (not always the best metric) $\implies$ total time taken from process creation to completion ($\sum t_{\text{ready queue}} + \sum t_{\text{blocked}} + \sum t_{\text{running}}$ )
+	- **Waiting Time** $\implies$ time that a process spends on the queue to wait for the CPU (Ready State)
+	- **Response Time** $\implies$ time from submission of a request to when the first response or output has been produced $\neq$ total time
 
 - scheduling is the **basis** of multi-programmed OSes $\implies$ makes the computer more productive
 
@@ -62,7 +62,7 @@
 ### B4. Circumstances
 ![process-state-model](../assets/process-state-model.png)
 1. **Event Wait:** Process $P$ switches from *running to blocked state* (i.e. waiting for the CPU, usually I/O burst)
-2. **Release CPU:** Process $P$ switches from *running to ready state* (i.e. when interrupt occurs)
+2. **Release CPU / Interrupt:** Process $P$ switches from *running to ready state* (i.e. when interrupt occurs) $\implies$ process is enqueued to ready queue due to scheduling policy
 3. **Event Occurs**: Process $P$ switches from *blocked to ready state* (i.e. completion of I/O operation)
 4. **Process Termination (exit):** Process $P$ calls `exit()`, CPU is reallocated to another process
 	- may not be possible for web server processes which are designed to constantly alternate between ready, running and blocked/waiting
@@ -73,14 +73,16 @@ Scheduling options are available for (2) and (3).
 **Alternate Diagram**
 - process in other states other than running are technically "waiting" as well in some form of queue
 - queues are used to manage the execution order of processes
-![process-state-model-alt2](../assets/process-state-model-alt2.png)
+- interrupt is not illustrated below (i.e. Running $\to$ Ready)
+
+	![process-state-model-alt2](../assets/process-state-model-alt2.png)
 
 **Usage of the dispatcher is shown below**
 - allocate the CPU to the first process in the *ready queue* $\implies$ i.e. perform the context switch
 - PCB structure of a given process is saved in the ready queue and this contains the CPU state (inclusive of registers and $PC$) which can be restored once the process to resume execution in the running state
 - if supported, dispatcher is also responsible for switching back to user mode before handler control to the process
 
-![dispatcher](../assets/dispatcher.png)
+	![dispatcher](../assets/dispatcher.png)
 ### B5. Policies
 These are the ways that CPU scheduling can occur.
 1. **Non-preemptive**
@@ -158,8 +160,9 @@ $$
 ![SJF-illustration](../assets/SJF-illustration.png)
 - let $P_1, \ldots, P_4$ overtake $P_5$ whenever they are in the ready queue
 
-> **Starvation** occurs when the *scheduling policy* causes a process to wait *indefinitely* in the ready queue (i.e. cannot go to running state)
+> **Starvation** occurs when the ==*scheduling policy* causes a process to wait *indefinitely*== in the ready queue (i.e. cannot go to running state)
 - usually occurs to process that is CPU-bound and requires lots of time in the CPU (high CPU burst)
+- is a consequence of the scheduling policy itself
 ###### 3. Shortest Remaining Time Next (SRTN)
 - is a variant of SJF, but we use the remaining time and is **preemptive**
 - selection of the job with the shortest (expected) time remaining
@@ -181,48 +184,57 @@ $$
 > The **time quantum** is the fixed time slice given to each process in a preemptive scheduling algorithm (like Round Robin).
 - It is *typically constant* for all processes in a system (but could be variable in some systems)
 - It is usually chosen as a *multiple of the system clock interval* (interval of timer interrupt)
-- It is *not arbitrarily large* — while it can be tuned, very *large* time quantums reduce preemption and essentially turn Round Robin into FCFS.
-- Very *small* time quantums increase context switching overhead.
+- It is *not arbitrarily large* — while it can be tuned, very *large* time quantums reduce preemption and essentially turn Round Robin into FCFS
+- Very *small* time quantums **increase context switching overhead** $\implies$ more switching between processes are required as they are interrupted very frequently
+	- context switch time is treated as pure overhead $\implies$ no useful work is done by the processor during these idle periods
 
 > The **interval of timer interrupt** is typically $1$ms or $10$ms
 - no of time blocks allocated $= \frac{\text{Time Quantum}}{\text{Interval of Timer Interrupt}}$
 ## D. Scheduling Algorithms
 ### D1. Round Robin (RR)
 - tasks are stored in a first in first out (FIFO) queue
-- is a preemptive scheduling algorithm $\implies$ allows for process switching
 
-- small unit of time, a time quantum or slice is arbitrarily defined
+- is a preemptive scheduling algorithm $\implies$ allows for process switching (preemptive FCFS)
+
+- a small unit of time $\textemdash$ time quantum or slice is arbitrarily defined for each process to run for
 
 - the first item is dequeued and ran until either of the following is met:
-	- fixed time slice expires
-	- the task gives up the CPU voluntarily
-	- the task will block (due to I/O operations)
+	- **fixed time slice expires** ($\exists$ a timer which is physically embedded within the CPU circuitry itself) $\implies$ RR can only be implemented if the hardware supports having a timer and preemptive scheduling
+	- the task **gives up** the **CPU voluntarily**
+	- the task will **block** (due to I/O operations)
 
-- tasks are then placed at the end of the queue to wait for subsequent turns 
+- tasks are then placed at the **tail of the FIFO / ready queue** to wait for subsequent turns 
 
 - blocked tasks will be moved to another queue to wait for its request to be granted
 	- when blocked tasks are ready, then they are placed at the end of the main queue again
 
-- in essence, it is a preemptive version of FCFS algorithm
-
 - response time guarantee
-	- given $n$ tasks and the time quantum $q$, the time before the CPU gets the CPU again is $\lceil(n-1) \times q \rceil$ (bounded by this figure)
+	- given $n$ tasks and the time quantum $q$, the **waiting time** before the CPU gets the CPU again is $\lceil(n-1) \times q \rceil$ (bounded by this figure)
+	- each process with receive $\frac{1}{n}$ of the CPU time, of at most $q$ time units (given time quantum $= q$)
 
 - timer interrupt is required for the timer to check quantum expiry $t_0 \leq q$, where $t_0$ is the current time
 
-- choice of time quantum duration $q$ is **important**
-	- larger quantum $\to$ better CPU utilization, but longer waiting times
-	- smaller quantum $\to$ larger overhead and worse CPU utilization, but shorter waiting times
+- *choice* of time quantum duration $q$ is **important**
+	- larger quantum $\to$ better CPU utilization, but *longer waiting times* (most processes will enter an I/O burst before being preempted)
+		- average response time will increase
+		
+	- smaller quantum $\to$ larger overhead and worse CPU utilization, but shorter waiting times (more interruptions)
+
+	![rr-time-quantums](../assets/rr-time-quantums.png)
+
+- one of the simplest ways to **achieve concurrency**
 ### D2. Priority-based Scheduling
-- prioritize more important processes as compared with the less important ones $\implies$ don't treat all of them as equal
-- assign a priority value to all the tasks and then select the one with the highest priority value
+- prioritize **more important processes** as compared with the less important ones in the queue $\implies$ don't treat all of them as equal
+- assign a priority value to all the tasks and then select the one with the highest priority value (usually that of an integer value)
+- can be combined together with Round Robin as well (but may require $O(n)$ search to determine highest priority)
 ###### Variants
 1. Preemptive version: process w higher priority preempts those running processes with lower priority
 2. Non-preemptive version: a late-coming high priority process waits for the next round of scheduling
 ###### Starvation
-- Low priority process can **starve** because other higher priority ones can hog the CPU, which is worse comparatively in the preemptive than non-preemptive variant
+- Low priority process can **starve** because other higher priority ones can *hog the CPU*, which is worse comparatively in the preemptive than non-preemptive variant
 
 - Resolve by decreasing the priority of the current running process after each quantum (to make it of a higher priority in the long run)
+	- can also use aging with does the opposite, increasing the priority of processes which have been waiting in the system for a long time, to prevent starvation from occurring
 
 - Hard to control the exact amount of CPU allotted to processes using this priority system
 ###### Priority Inversion
