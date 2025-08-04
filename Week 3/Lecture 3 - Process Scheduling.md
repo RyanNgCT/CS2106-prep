@@ -18,7 +18,7 @@
 	- **CPU utilization** $\implies \%$ of time whereby the CPU is *actively executing processes* (should be doing useful work)
 	- **Throughput** $\implies \#$ processes completed *per time unit*
 	- **Turnaround Time** (not always the best metric) $\implies$ total time taken from process creation to completion ($\sum t_{\text{ready queue}} + \sum t_{\text{blocked}} + \sum t_{\text{running on the CPU}}$ )
-	- **Waiting Time** $\implies$ time that a process spends on the queue to wait for the CPU (Ready State)
+	- **Wait Time** $\implies$ time that a process spends on the queue to wait for the CPU (Ready State)
 	- **Response Time** $\implies$ time from submission of a request to when the first response or output has been produced $\neq$ total time
 
 - scheduling is the **basis** of multi-programmed OSes $\implies$ makes the computer more productive
@@ -85,11 +85,12 @@ Scheduling options are available for (2) and (3).
 	![dispatcher](../assets/dispatcher.png)
 ### B5. Policies
 These are the ways that CPU scheduling can occur.
-1. **Non-preemptive**
+1. **Non-preemptive / Cooperative**
 	- process currently in the running state stays as such until it *blocks* or *gives up CPU voluntarily* (process cannot be interrupted)
+	- usually has less overhead as compared to preemptive ones
 
 2. **Preemptive**
-	- process is provided a time quota to run, but it can **block** or choose to **give up** the time slice early (process can be interrupted)
+	- process is provided a time quota to run, but it can **block** or ==choose to **give up**== the time slice early (process can be interrupted)
 	- at the end of the quota, *another process* gets selected where available and the running process is suspended
 	- Given that process $A$ which has a longer remaining CPU burst than process $B \implies$ priority given for process $B$
 
@@ -102,16 +103,16 @@ The order of process execution will change depending on which of the above is us
 - process $P$ runs
 ## C. Processing Environments
 ### C1. Batch Processing System
-##### Properties
+#### Properties
 - No user interaction
 - Non-preemptive scheduling is predominant
 - easier to understand and implement 
-##### Criteria
+#### Criteria (see above for the full list)
 - $\text{Turnaround Time} = \text{End Time} - \text{Start Time}$ (a.k.a. the total time taken, which is related to the waiting time for the CPU, which is $t_{\text{completion}} - t_{\text{arrival}}$)
-- Throughput $=$ no. of tasks completed per unit time
+- Throughput $=$ no. of tasks completed *per unit time*
 - CPU Utilization $= \%$ of time when CPU is working on a task
-##### Examples
-###### 1. First Come First Served (FCFS)
+#### Examples
+##### 1. First Come First Served (FCFS)
 - CPU is allocated to the first process that requests for it
 	- "CPU is allocated to process $x$" $\implies PC$ value is at the `.text` section  of the process, which enables the CPU to execute instructions
 	- any form of *context switching* means that the $PC$ value is updated to a new section 
@@ -130,22 +131,35 @@ The order of process execution will change depending on which of the above is us
 
 - manages the next CPU burst
 	![fcfs-processing](../assets/fcfs-processing.png)
-###### 2. Shortest Job First (SJF)
+##### 2. Shortest Job First (SJF)
 - selects the task with the **smallest total CPU time** as the *first to be processed* (smallest next CPU burst)
 
 - **total CPU execution time** is a need to know
-	- can be *estimated* based on previous CPU-bound phases (impossible to determine for sure)
+	- can be *estimated* based on previous CPU-bound phases (impossible to determine for sure how long any task will take)
 	- if two processes have the same burst length, then FCFS is used as the tie-breaker
 	
 - implementation is done using a priority queue, allows processes with shorter burst to overtake that of longer CPU burst
+	- single priority scheduling scheme
 
 - provides a fixed set of tasks to **minimize the average waiting time** (reduce queueing of processes)
 	- enables for the minimum average waiting time per process
 	- impossible to *implement perfectly*
 
-- exponential average formula:
+- **lowest** average response times $\implies$ needed for interactive programs
+
+- up to *scheduler policy* to decide whether to interrupt process that takes longer to complete and swap out for new I/O bound process that has arrived in ready queue
+	- preemptive or non-preemptive
+
+	![SJF-illustration](../assets/SJF-illustration.png)
+- let $P_1, \ldots, P_4$ overtake $P_5$ whenever they are in the ready queue
+
+> **Starvation** occurs when the ==*scheduling policy* causes a process to wait *indefinitely*== in the ready queue (i.e. cannot go to running state)
+- usually occurs to process that is CPU-bound and requires lots of time in the CPU (high CPU burst)
+- is a consequence of the scheduling policy itself
+##### Exponentially Weighted Moving Average 
+- a.k.a. exponential average
 	- $\alpha = 0 \implies$ prediction depends on past events, *excluding* the most recent event $n$ (i.e. $[0 \:, n-1]$)
-	- $\alpha = 1 \implies$ prediction depends solely on most recent event (only $n$)
+	- $\alpha = 1 \implies$ prediction depends solely on most recent event (only $n$), ignore the reality of previous predictions
 	- common to make $0 \lt \alpha \lt 1$
 $$
 	\begin{aligned}
@@ -157,21 +171,14 @@ $$
 	\alpha &= \text{weight on recent event, where we assume this value} < 1
 	\end{aligned}
 	$$
-- up to *scheduler policy* to decide whether to interrupt process that takes longer to complete and swap out for new I/O bound process that has arrived in ready queue
-	- preemptive or non-preemptive
-
-![SJF-illustration](../assets/SJF-illustration.png)
-- let $P_1, \ldots, P_4$ overtake $P_5$ whenever they are in the ready queue
-
-> **Starvation** occurs when the ==*scheduling policy* causes a process to wait *indefinitely*== in the ready queue (i.e. cannot go to running state)
-- usually occurs to process that is CPU-bound and requires lots of time in the CPU (high CPU burst)
-- is a consequence of the scheduling policy itself
-###### 3. Shortest Remaining Time Next (SRTN)
-- is a variant of SJF, but we use the remaining time and is **preemptive**
-- selection of the job with the shortest (expected) time remaining
+	
+- does not hold up well when we have long CPU burst and then followed directly by a shorter one
+##### 3. Shortest Remaining Time Next (SRTN)
+- is a variant of **SJF**, but we use the remaining time and is **preemptive**
+- selection of the job with the shortest (expected) time *remaining*
 
 - new job with shorter remaining time can be used to preempt the current running job
-	- pause current longer job and run the shorter one first
+	- pause current longer job and run the shorter one first before going to finish the longer one
 	
 - provides a good service of a short job even when it arrives late
 ### C2. Scheduling System
@@ -194,6 +201,8 @@ $$
 - no of time blocks allocated $= \frac{\text{Time Quantum}}{\text{Interval of Timer Interrupt}}$
 ## D. Scheduling Algorithms
 Good scheduling algorithms will need to effectively balance CPU allocation (time) and overhead time (i.e. time for context switching), to optimize turnaround time and throughput.
+
+- Scheduling is done on processes, but also on threads in modern systems
 ### D1. Round Robin (RR)
 - tasks are stored in a first in first out (FIFO) queue
 
@@ -282,13 +291,12 @@ Good scheduling algorithms will need to effectively balance CPU allocation (time
 1. each new job has the highest priority (queue)
 
 2. if a job fully *utilized its time slice* (single time quantum $q$), then its priority will be **reduced** (i.e. moved down to a lower priority queue)
-	- lower priority queues have larger time quantums
+	- lower priority queues have **larger time quantums** $\implies$ allows for lesser time spent on context switching
 	- move those which have completed I/O tasks from lower to higher priority queues
 	
 3. if a job *gives up or blocks* **before** finishing the time slice, then its priority is **maintained**
 
 	![mlq-vs-mlfq](../assets/mlq-vs-mlfq.png)
-
 ### D4. Lottery Scheduling
 - providing the various lottery tickets for processes which need various system resources
 - when scheduling decision is required $\implies$ randomly choose one amongst many tickets
