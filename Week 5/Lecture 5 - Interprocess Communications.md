@@ -1,7 +1,12 @@
 ## A. Motivation
-- processes can be independent (don't have any interaction between each other) or cooperating 
+- processes can be independent (don't have any interaction between each other) or cooperating
+	- are usually isolated from each other by default
 
 - hard for cooperating processes to share info $\implies$ memory space is independent and IPC mechanisms are needed
+
+- reasons for requiring process cooperation and hence IPC
+	- **computational speedup**: good in systems supporting parallelism
+	- **modularity**: division of separate functions to different processes
 
 - IPC Mechanism
 	- Shared memory
@@ -10,17 +15,33 @@
 - two Unix-specific IPC mechanisms
 	- Unix Pipe
 	- Unix Signal
-
 ## B. Communication Mechanisms
+Recall that processes have the following:
+- **memory region** allocated to itself (address space)
+- **CPU state**
+- list of **open files**
+- **resources** like I/O devices
+
+A process is an entire context in which a program operates in.
 ### B1. Shared Memory
 - process $P_1$ creates shared memory region $M$
+	- usually the OS will allocate separate address spaces for each process in execution
+
 - process $P_2$ attaches memory region $M$ to its own memory space
 - $P_1$ and $P_2$ can communicate using memory region $M$
 	- any memory writes to the region can be seen by all the other parties
 	- $M$ is a shared memory region and behaves very similarly to normal memory region
 
+	![shared-memory-model](../assets/shared-memory-model.png)
+
 - same model is applicable to multiple processes sharing the same memory region
+	- data in the shared memory region is no longer managed by the OS, but rather, the $n$ processes that share the region
 	![shared-memory](../assets/shared-memory.png)
+
+
+- possible memory model is one that of producer-consumer $\implies$ need to agree how data is structured
+##### Example: Chromium Browsers
+![shared-memory-eg](../assets/shared-memory-eg.png)
 
 ##### Advantages
 - **Efficient:** only the initial steps, the create and attach shared memory region involves the OS
@@ -28,6 +49,7 @@
 ##### Disadvantages
 - **Synchronization:** shared resource but we need to synchronize access
 - **Harder to implement**
+- Error prone
 
 ##### Steps for usage
 1. Create or locate a shared memory region $M$
@@ -110,6 +132,8 @@ int main()
 - process $P_1$ prepares a message $k$ and sends it to $P_2$
 - $P_2$ receives $k$ 
 - note that message sending and receiving are usually provided as system calls
+
+- unlike shared memory, the processes are isolated
 
 **Properties**
 1. Naming $\to$ identify the other party in the communication
