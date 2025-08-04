@@ -180,7 +180,6 @@ $$
 2. **Predictability** $\to$ variation in response time, less variation $\implies$ more predictable and vice versa
 ##### Periodic Scheduling
 *Note:* preemptive scheduling algorithms are used to ensure good response time as scheduler needs to run periodically
-
 - we use a timer interrupt that goes off periodically based on the hardware clock to "take over" the CPU
 - the OS ensures that the timer interrupt **cannot be intercepted by other programs**
 ##### Terminology
@@ -194,6 +193,7 @@ $$
 > The **interval of timer interrupt** is typically $1$ms or $10$ms
 - no of time blocks allocated $= \frac{\text{Time Quantum}}{\text{Interval of Timer Interrupt}}$
 ## D. Scheduling Algorithms
+Good scheduling algorithms will need to effectively balance CPU allocation (time) and overhead time (i.e. time for context switching), to optimize turnaround time and throughput.
 ### D1. Round Robin (RR)
 - tasks are stored in a first in first out (FIFO) queue
 
@@ -218,22 +218,31 @@ $$
 - timer interrupt is required for the timer to check quantum expiry $t_0 \leq q$, where $t_0$ is the current time
 
 - *choice* of time quantum duration $q$ is **important**
-	- larger quantum $\to$ better CPU utilization, but *longer waiting times* (most processes will enter an I/O burst before being preempted)
-		- average response time will increase
+	- ==*larger quantum*== $\to$ better CPU utilization, but *longer waiting times* (most processes will enter an I/O burst before being preempted)
+		- average *response time* will **increase**
+		- average turnaround time can be improved if processes finish the next CPU burst in a single time quantum $\implies$ context switching only when necessary
 		
-	- smaller quantum $\to$ larger overhead and worse CPU utilization, but shorter waiting times (more interruptions)
+	- ==*smaller quantum*== $\to$ larger overhead and worse CPU utilization, but shorter waiting times (more interruptions and is pure overhead)
+		- don't want to have so many grey regions ($\uparrow \text{greys }$as $\text{time} \downarrow$)
 
 	![rr-time-quantums](../assets/rr-time-quantums.png)
-
-- one of the simplest ways to **achieve concurrency**, but **fails** to maintain **responsiveness** (may take a very long time to produce its first output)
+##### Advantages
+- one of the simplest ways to **achieve concurrency**
+- allows for a **fair distribution** of CPU time
+##### Disadvantages
+- **fails** to maintain **responsiveness** (may take a very long time to produce its first output)
 	- waiting time will also increase, as $n \: \#$ tasks is being increased 
 ### D2. Priority-based Scheduling
 - prioritize **more important processes** as compared with the less important ones in the queue $\implies$ don't treat all of them as equal (but need to select those that require higher priority carefully)
 - assign a priority value to all the tasks and then select the one with the highest priority value (usually that of an integer value)
 	- can be implemented using both a ready and a waiting queue
-- can be combined together with Round Robin as well (but may require $O(n)$ search to determine highest priority)
+	
+- can be *combined* together with Round Robin as well (but may require $O(n)$ search to determine the process with highest priority because of the single FIFO queue used) $\implies$ solution is to use MLFQ as below
+
+- Main example: Shortest Job First Algorithm
 ##### Variants
 1. **Preemptive version:** process w higher priority preempts those running processes with lower priority $\implies$ lower priority process which arrive later in the queue can cause the current execution progress to be dequeued
+	- preempted processes **do not** go into the waiting / blocked state, but rather transition from $\text{Running} \xrightarrow[]{\text{ Interrupted }} \textbf{Ready}$ directly
 
 2. **Non-preemptive version:** a late-coming high priority process waits for the next round of scheduling
 ##### Starvation
@@ -246,16 +255,40 @@ $$
 ##### Priority Inversion
 - occurs when a lower priority task preempts a higher priority one, often due to I/O resource locking etc.
 ### D3. Multi-Level Feedback Queue (MLFQ)
-- is an adaptive algorithm that learns the process behaviour automatically
-- minimizes both response time for I/O-bound processes and turnaround time for CPU-bound processes
-###### Rules
-1. $\text{Priority}(A) \gt \text{Priority}(B) \implies \text{run } A$
-2. $\text{Priority}(A) = \text{Priority}(B) \implies \text{run } A \text{ and } B \text{ in round robin manner}$
+##### Motivation $\textemdash$ Multi-Level Queue Scheduling
+- having separated queues for each different priority. If we have priority levels of $\{0, 1, 2, \ldots, n\} \implies$ we will have $(n + 1)$ queues in total, with $n$ being the lowest priority
+- processes in queues with higher priority will be dequeued first, followed by subsequent processes in the lower priority queues (i.e. queue no. 0's elements will get dequeued before queue no. 3)
+- used to separate important processes (i.e. OS related) that are critical to the machine running smoothly from not so important ones (i.e. idle user application etc.)
 
-**Priority Settings**
-1. each new job has the highest priority
-2. if a job fully *utilized its time slice*, then its priority will be **reduced**
+	![multi-level-queue-scheduling](../assets/multi-level-queue-scheduling.png)
+- different queue layers can utilize different scheduling algorithms
+###### Disadvantage of Multi-level queueing
+- processes are permanently "tagged" to a particular queue $\implies$ has inflexibility involved when want to change priority etc.
+	- email client in the background most of the time versus when having the GUI of the email client displayed which should be responsive
+##### Properties
+- is an **adaptive algorithm** that **learns** the process behaviour automatically / dynamically
+	- solves the issue posed in multi-level queueing (without feedback)
+	
+- minimizes both *response time* for I/O-bound processes and *turnaround time* for CPU-bound processes
+	- sort of demotes the priority of CPU-bound processes
+
+- possible to have features like using historical data to change the priority of various processes, i.e. exponential weighted average, $\text{Predicted}_{n + 1}$
+
+	![MLFQ](../assets/MLFQ-ex.png)
+##### Rules
+1. $\text{Priority}(A) \gt \text{Priority}(B) \implies \text{run } A$
+2. $\text{Priority}(A) = \text{Priority}(B) \implies \text{run } A \text{ and } B \text{ with round robin algo}$
+##### Priority Settings
+1. each new job has the highest priority (queue)
+
+2. if a job fully *utilized its time slice* (single time quantum $q$), then its priority will be **reduced** (i.e. moved down to a lower priority queue)
+	- lower priority queues have larger time quantums
+	- move those which have completed I/O tasks from lower to higher priority queues
+	
 3. if a job *gives up or blocks* **before** finishing the time slice, then its priority is **maintained**
+
+	![mlq-vs-mlfq](../assets/mlq-vs-mlfq.png)
+
 ### D4. Lottery Scheduling
 - providing the various lottery tickets for processes which need various system resources
 - when scheduling decision is required $\implies$ randomly choose one amongst many tickets
@@ -263,7 +296,7 @@ $$
 
 - trend: in the long run, process holding $X\%$ of the tickets can win $X\%$ of the lottery held
 ###### Properties
-1. Responsive: new processes can participate in the next lottery
-2. Good Control: process can be given $Y$ lottery tickets and distribute it to its children processes
+1. **Responsive:** new processes can participate in the next lottery
+2. **Good Control:** process can be given $Y$ lottery tickets and distribute it to its children processes
 	- more important child process can be given more ticket (for higher chance of being selected and to control the proportion of usage)
 	- each resource can have its own set of tickets (different proportion of usage per resource, per task)
