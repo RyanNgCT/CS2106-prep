@@ -51,6 +51,11 @@ $$
 #### Thread States
 - **Ready, Running or Blocked**
 	- $\text{Running} \xrightarrow{\: \text{do I/O} \:} \text{Blocked} \xrightarrow{\: \text{I/O done} \:} \text{Ready} \xrightarrow{\: \text{Continue (per scheduler and ready queue)} \:} \text{Running}$
+
+#### Abstraction
+- gives the illusion that there are $\infty$ processors, but in reality there are finite numbers and each execute at variable speed.
+- some threads may be running while others are ready, but not running (still described as executing)
+	![thread-abstraction](../assets/thread-abstraction.png)
 #### Other notable points
 - each thread doesn't contain code, but rather points to executable code  in `.text` through the unique $PC$ value $\implies$ not dangerous because `.text` is not write-able
 
@@ -71,7 +76,7 @@ $$
 
 > A **context switch** involves *storing* the state of an existing process or thread, so that it can be restored and execution can be resumed at a later point in time, and then restoring a different, previously saved state
 - during a **context switch**, the $PC$, `$sp` etc. are saved in the corresponding thread's TCB (so that it can continue)
-	- context switch time can *vary* (should reduce to prevent thrashing) $\implies$ incurs *time and resource overhead*
+	- context switch times can *vary* (should reduce to prevent thrashing) $\implies$ incurs *time and resource overhead*
 		- occurs when there is a **system call** or triggering a software interrupt voluntarily
 		- also can occur due to blocking I/O
 
@@ -79,7 +84,7 @@ $$
 
 	- once timer (clock) is done, the $PC$ value is overwritten to jump to a new memory location which contains code needed to handle the interrupt
 
-- interrupted process (for context switch) state needs to be *saved* somewhere (usually in RAM) and new process state to be loaded (from memory to registers) $\implies$ allow subsequent process to take over without incorrect execution
+- *interrupted process state* **needs to be *saved* somewhere** (usually in RAM) and new process state to be loaded (from memory to registers) $\implies$ allow subsequent process to take over without incorrect execution
 	- can use multiple register sets to save the program state $\implies$ need to ensure for $m$ processes with $n$ register sets that $m \leq n$, since $n$ is **finite**
 		- actually requires only two register sets (i.e. $n = 2$) $\implies$ one for user mode and the other for kernel mode, provided that the processor supports these two modes
 
@@ -101,9 +106,9 @@ $$
 \\
 \end{aligned}
 $$
-##### Unique Thread Components
-1. Identification (`tid`)
-2. Registers ($GPR$s and special ones like $PC$ as well)
+##### Unique Thread Components (kept within Thread Control Block)
+1. Identification (`tid`) and metadata
+2. CPU Registers ($GPR$s and special ones like $PC$ as well)
 3. Stack (which contains `$sp`) $\implies$ unique thread of execution
 
 	![process-n-thread-illustration](../assets/process-n-thread-illustration.png)
@@ -116,9 +121,13 @@ $$
 - to make a single-threaded process into a multi-threaded one, we can make use of *system calls* to create new threads $\implies$ new threads share the address space
 	- new threads can **read and write** into each other's data and stack $\implies$ allows for information and data sharing
 	- usually the case for most OSes where **threads are spawned dynamically** from the `main` thread $\implies$ single to multiple threads, created at runtime as required
-		![thread-creation](../assets/thread-creation.png)
+	![thread-creation](../assets/thread-creation.png)
 
-- In most systems, when terminating a main thread of a program with `exit()`, other child/spawned threads will also terminate
+- In most systems, when terminating a main thread of a program with `exit()`, other child/spawned threads will also terminate.
+##### Common Thread Components
+- The state of all threads in the process address space
+	- contents of memory (i.e. global variables and heap)
+	- I/O state (i.e. file descriptors, network connections etc.)
 ### A4. Parallelism*
 - doing multiple things simultaneously (using *many processor cores*), i.e. **multiprocessing**
 - does not require multiple tasks, but rather, can also split up one task to be done by multiple cores (through sub-tasks)
@@ -153,6 +162,8 @@ $$
 	- `fork()` a duplicate process or thread
 	- if a single thread executes `exit()`, what would happen to the entire process?
 	- if a single thread calls `exec()`, how about threads?
+	- does the execution order of the threads affect the overall output of the program $\implies$ what about non-deterministic and concurrent threads where the scheduler can run threads in any order and switch threads at any time (preemptive)
+		- looking as race conditions and order of execution
 ## B. Thread Models
 
 ### B1. Kernel versus User Thread Models
@@ -192,15 +203,6 @@ $$
 	- **exception** is an *internal synchronous* event that *triggers context switch* like a protection violation (seg fault)
 	
 	- can access system using timer interrupts, I/O requests etc.
-#### III. User and Kernel Modes
-- kernel mode exists to ensure that programs **do not** have direct access to hardware (for security reasons)
-
-- applications and programs run in user mode, but they must use services through API and syscalls from kernel mode to do kernel-related operations
-	- in system (kernel) mode, we have access to the full address space
-	- mode bit indication is dependent on the type of hardware as well
-	![user-to-kernel-transition](../assets/user-to-kernel-transition.png)
-
-	![monolithic-unix-system-components](../assets/monolithic-unix-system-components.png)
 
 **Advantages**
 - kernel can schedule on thread levels $\implies \geq 1$ thread in the same process can run simultaneously on multiple CPUs
@@ -212,9 +214,22 @@ $$
 	- if *implemented with many features*, can be expensive (and is an overkill for simpler programs)
 	- if *implemented with few features*, may be inflexible for some programs
 ![kernel-thread](../assets/kernel-thread.png)
+#### III. User and Kernel Modes
+- kernel mode exists to ensure that programs **do not** have direct access to hardware (for security reasons)
+
+- applications and programs run in user mode, but they must use services through API and syscalls from kernel mode to do kernel-related operations
+	- in system (kernel) mode, we have access to the full address space
+	- mode bit indication is dependent on the type of hardware as well
+	![user-to-kernel-transition](../assets/user-to-kernel-transition.png)
+
+**Unix System Components**
+![monolithic-unix-system-components](../assets/monolithic-unix-system-components.png)
+
+**User-kernel transitions**
+![user-kernel-transitions](../assets/user-kernel-transitions.png)
 #### IV. The Syscall interface
 - allows one to go from user to kernel mode, follows the hour-glass idea like IP in the network stack
-- are hidden below various user-level or OS-level APIs (i.e. `libc`)
+- are **hidden below** various user-level or OS-level APIs (i.e. `libc`)
 - syscalls are not standard across OSes. Each OS can have different types of system call interface (unless talking about POSIX standard)
 
 ### B2. Hybrid Model
@@ -230,16 +245,10 @@ $$
 
 > **Simultaneous multi-threading:** hardware support $\exists$ on modern processes, such as the set of general purpose registers to allow threads to run natively and in parallel on the same core
 ![hybrid-thread-solaris](../assets/hybrid-thread-solaris.png)
-
 ## C. Threads in Unix
 - `pthread` is a **standard** defined by IEEE to support most Unix variants $=$ Posix thread
 - IEEE standard defines the behaviour, but not the actual implementation $\implies \therefore \:$ `pthread` can implemented as user or kernel thread
 - will show a few examples to highlight the differences between process & thread only
-$$
-\begin{aligned}
-\\\\\\
-\end{aligned}
-$$
 ### C1. Example usage
 ```c
 #include <pthread.h>
@@ -261,7 +270,7 @@ gcc <file>.c -lpthread
 int pthread_create(
        pthread_t  *tidCreated,  // thread id
        const pthread_attr_t *threadAttributes,   // attributes     
-       void *(*startRoutine) (void*),   // function ptr to funct to be exec
+       void *(*startRoutine) (void*),   // function ptr to funct to be exected
        void *argForStartRoutine  // arguments for the startRoutine funct
 );
 ```
@@ -273,8 +282,8 @@ int pthread_create(
 ```c
 void pthread_exit( void *exitValuePtr );
 ```
-- used to terminate a thread, if not the `pthread` will automatically terminate when end of `startRoutine` is reached $\implies$ no exit value
-- makes the `exitValuePtr` available to any successful `join()` method
+- used to terminate a thread, if not the `pthread` will **automatically terminate** when end of `startRoutine` is reached  *(done implicitly)* $\implies$ no exit value
+- makes the `exitValuePtr` available to any successful `join()` method $\implies$ allows for threads to be joined
 ### C4. Creation + Termination Example
 ```c
 #include <stdio.h>

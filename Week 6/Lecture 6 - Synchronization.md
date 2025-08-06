@@ -29,24 +29,52 @@ X = X + 1000
 	- can cause synchronization problems
 ![race-condition](../assets/race-condition.png)
 #### Solution
+> **Synchronization** is the coordination among threads, usually regarding shared data
 - incorrect execution is due to unsynchronized access to shared modifiable resource
 - solution outline $\implies$ designate code segment *with race condition* as critical section and only one process can execute in the critical section
 ## B. Critical Section
+> A **critical section** is code that exactly one thread can execute at once.
+
+> A **lock** is an object that only one thread can hold at a time to *provide the mutual exclusion property.*
+- implemented using a tree-based set data structure (use depth first search algorithm) $\implies$ with the `init` process as the root of the tree in Linux
+- **`lock.acquire()`** $\textemdash$ wait until lock is free then mark as busy (function returning results in thread "holding" the lock)
+	- other threads are put to sleep when they attempt to acquire a lock which is marked
+- **`lock.release()`** $\textemdash$ mark the lock previously held by a thread as free
+
+- implemented in the `pthread` library as `mutex`
 #### Properties of correct Critical Section
 - **Mutual Exclusion:** if process $P_i$ is executing in critical section, then all the process are prevented from entering the critical section
+	- achieves the goal of ensuring only one thread does one thing at once
+	
 - **Progress:** if no process is in a critical section, then one of the waiting processes should not be granted access
-- **Bounded Wait:** After process $P_i$ requests to enter critical section, then $\exists$ upper bound to \# times other processes can enter the critical section before $P_i$
-- **Independence:** process not executing in critical section should never block other processes
 
+- **Bounded Wait:** After process $P_i$ requests to enter critical section, then $\exists$ upper bound to \# times other processes can enter the critical section before $P_i$
+
+- **Independence:** process not executing in critical section should never block other processes
 #### Symptoms of Incorrect Synchronization
 1. **Deadlock:** if all processes are blocked $\implies$ there is no progress
 2. **Livelock**: is a deadlock avoidance mechanism, whereby processes keep changing their state to avoid deadlock, but *no progress is made*
-3. **Starvation:** processes are blocked forever
-
-#### Implementation of Critical Section
+3. **Starvation:** processes are blocked forever (from entering the running state and having a CPU burst)
+## C. Implementations of Critical Sections
 1. Assembly-level implementation by the processor
 2. High-level language implementation which uses programming constructs
 3. High-level abstractions which provide additional useful features and are commonly implemented by assembly level mechanisms
-## C. Implementations of Critical Sections
+
+### C1. Assembly: Test and Set
+- uses a machine instruction to aid synchronization of threads
+```nasm
+TestAndSet reg, [mem]
+```
+
+**Behaviour**
+- Load current content of `[mem]` into `reg`
+- store a `1` into `[mem]`
+
+**Observations**
+- works, but employs busy waiting (i.e. waste of processing power)
+- variants of the `TestAndSet` instruction $\exists$ on other processors
+	- compare and exchange
+	- atomic swap
+	- load link, store conditional
 
 ## D. Classical synchronization problems
