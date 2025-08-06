@@ -1,6 +1,6 @@
 ## A. Motivation
 - processes can be independent (don't have any interaction between each other) or cooperating
-	- are usually isolated from each other by default
+	- are usually isolated from each other by default (i.e. isolated memory space)
 
 - hard for cooperating processes to share info $\implies$ memory space is independent and IPC mechanisms are needed
 
@@ -15,6 +15,8 @@
 - two Unix-specific IPC mechanisms
 	- Unix Pipe
 	- Unix Signal
+
+- may come across a lack of security if IPC is done without encryption or when multiple processes can access the shared memory space
 ## B. Communication Mechanisms
 Recall that processes have the following:
 - **memory region** allocated to itself (address space)
@@ -27,7 +29,7 @@ A process is an entire context in which a program operates in.
 - process $P_1$ creates shared memory region $M$
 	- usually the OS will allocate separate address spaces for each process in execution
 
-- process $P_2$ attaches memory region $M$ to its own memory space
+- process $P_2$ attaches memory region $M$ to its **own memory space**
 - $P_1$ and $P_2$ can communicate using memory region $M$
 	- any memory writes to the region can be seen by all the other parties
 	- $M$ is a shared memory region and behaves very similarly to normal memory region
@@ -40,11 +42,13 @@ A process is an entire context in which a program operates in.
 
 
 - possible memory model is one that of producer-consumer $\implies$ need to agree how data is structured
+
+- must ensure that no two processes are performing a write operation at once $\implies$ data corruption
 ##### Example: Chromium Browsers
 ![shared-memory-eg](../assets/shared-memory-eg.png)
-
 ##### Advantages
 - **Efficient:** only the initial steps, the create and attach shared memory region involves the OS
+	- very fast communications
 - **Easy to use:** shared memory region $M$ behaves similarly to normal memory space
 ##### Disadvantages
 - **Synchronization:** shared resource but we need to synchronize access
@@ -133,9 +137,12 @@ int main()
 - $P_2$ receives $k$ 
 - note that message sending and receiving are usually provided as system calls
 
-- unlike shared memory, the processes are isolated
+- unlike shared memory, the processes are **isolated** (don't have any shared memoory space)
 
-**Properties**
+- used in networking client-server model (socket interface)
+	- client and server are processes that run inter- or intra-host
+	- communication doesn't always require a network
+#### Properties
 1. Naming $\to$ identify the other party in the communication
 2. Synchronization $\to$ behaviour of sending and receiving operations
 
@@ -143,19 +150,28 @@ int main()
 - Message $k$ has to be stored in kernel memory space
 - all send and receive operations need to go through the OS via a system call
 
-| Direct Comms                                                                                                                                                                                                       | Indirect Comms                                                                                                                                                                         |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| - Sender or receiver of message explicitly name the other party<br><br>- format `send(P2, msg)` and `receive(P1, msg)`<br><br>- one link per pair of comms processes, need to know the identity of the other party | - Message is sent or receiver from message storage, a.k.a. `port`<br><br>- format `send(MB, msg)` and `receive(MB, msg)`<br><br>- one mailbox can be shared amongst multiple processes |
-**Pros**
+| Direct Comms                                                                                                                                                                                                       | Indirect Comms                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| - Sender or receiver of message explicitly name the other party<br><br>- format `send(P2, msg)` and `receive(P1, msg)`<br><br>- one link per pair of comms processes, need to know the identity of the other party | - Message is sent or receiver from message storage, a.k.a. **`port`** (⚠️ *msg not sent directly to processes*)<br><br>- format `send(MB, msg)` and `receive(MB, msg)`<br><br>- possible for one mailbox to be shared amongst multiple processes |
+#### Indirect Communications Example
+![message-passing-eg](../assets/message-passing-eg.png)
+- Both $B$ and $A$ have mailboxes for specific senders $\implies$ can be implemented using FIFO / FCFS queues
+- another variant is to have a more generic **listening port**, whereby the mailbox accepts process data from any other process on the system
+#### Pros
 - *portable:* easily implemented on different processing environment 
+	- processes don't even need to be on the same machine to communicate with each other (port $X$ on host $A$ can communicate with port $Y$ on host $B$) $\implies$ requires river level programming for hardware like Network Interface Cards
+
 - *easier synchronization:* when the synchronous primitive is used, both the sender and receiver are implicitly 
 
-**Cons**
+#### Cons
 - *inefficient* as it requires OS intervention
-- harder to use as the message is usually limited by size and/or format
+	- requires the use of system calls for communication establishment $+$ each time one wants to send or receive data via mailbox / port
+
+- *harder to use* as the message is usually limited by size and/or format
 ### B3. Unix Pipe
 > **Piping:** Unix shell provides the `|` symbol as a "link" for input and output channels of one process to another 
 - output of command $A$ is passed in as an input for command $B$
+- *unidirectional point to point scheme* for the transfer of raw bytes
 
 - Unix pipe is one of the earlier IPC mechanisms
 	- it is a communication channel with two ends (write into and read from), which can be shared between $2$ processes and has a producer-consumer relationship
@@ -201,11 +217,11 @@ int main() {
     char buf[100], *str = "Hello There!";
 
     pipe(pipeFd);
-    if ((pid = fork()) > 0) { /* parent */
+    if ((pid = fork()) > 0) { /* parent proc */
         close(pipeFd[READ_END]);
         write(pipeFd[WRITE_END], str, strlen(str) + 1);
         close(pipeFd[WRITE_END]);
-    } else { /* child */
+    } else { /* child proc */
         close(pipeFd[WRITE_END]);
         len = read(pipeFd[READ_END], buf, sizeof buf);
         printf("Proc %d read: %s\n", pid, buf);

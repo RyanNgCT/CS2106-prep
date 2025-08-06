@@ -25,6 +25,11 @@
 	- do not want incorrect data being access or written to
 	- can read from or write to other thread's stack
 	![thread-memory-interactions](../assets/thread-memory-interactions.png)
+$$
+\begin{aligned}
+\\
+\end{aligned}
+$$
 
 > A thread is **suspended** when its state is *not resident* in the processor (i.e. not loaded)
 - processor state is pointing at another thread
@@ -91,6 +96,11 @@
 - each thread should have its own **protected address space** with its own file descriptors and file systems context
 	- note that file descriptors are on a process level, which is a non-negative integer value
 	- address space is the visible part of the memory locations to the processor, and in turn the program as well for read or write operations using `lw` and `sw`
+$$
+\begin{aligned}
+\\
+\end{aligned}
+$$
 ##### Unique Thread Components
 1. Identification (`tid`)
 2. Registers ($GPR$s and special ones like $PC$ as well)
@@ -201,7 +211,6 @@
 	- used by all multithreaded programs
 	- if *implemented with many features*, can be expensive (and is an overkill for simpler programs)
 	- if *implemented with few features*, may be inflexible for some programs
-
 ![kernel-thread](../assets/kernel-thread.png)
 #### IV. The Syscall interface
 - allows one to go from user to kernel mode, follows the hour-glass idea like IP in the network stack
@@ -223,9 +232,14 @@
 ![hybrid-thread-solaris](../assets/hybrid-thread-solaris.png)
 
 ## C. Threads in Unix
-- `pthread` is a standard defined by IEEE to support most Unix variants
+- `pthread` is a **standard** defined by IEEE to support most Unix variants $=$ Posix thread
 - IEEE standard defines the behaviour, but not the actual implementation $\implies \therefore \:$ `pthread` can implemented as user or kernel thread
 - will show a few examples to highlight the differences between process & thread only
+$$
+\begin{aligned}
+\\\\\\
+\end{aligned}
+$$
 ### C1. Example usage
 ```c
 #include <pthread.h>
@@ -238,6 +252,7 @@ int main() {
 ```
 
 **Compilation**
+- the flag `-lpthread` is required
 ```bash
 gcc <file>.c -lpthread
 ```
@@ -246,21 +261,25 @@ gcc <file>.c -lpthread
 int pthread_create(
        pthread_t  *tidCreated,  // thread id
        const pthread_attr_t *threadAttributes,   // attributes     
-       void* (*startRoutine) (void*),   // function ptr to funct to be exec
+       void *(*startRoutine) (void*),   // function ptr to funct to be exec
        void *argForStartRoutine  // arguments for the startRoutine funct
 );
 ```
-- returns the value of `0` for success, returns non-zero if got errors
+- is a C function call to create a thread (i.e. a schedulable entity) with *several arguments* of which are pointers to structures
+- requires a transition from *user to kernel mode* to create the thread using a `syscall`
+- returns the value of `0` for **success**, returns non-zero if got errors (which is somewhat like a normal user function)
+	- return is implicit call to `pthread_exit`
 ### C3. Termination
 ```c
-void pthread_exit( void* exitValue );
+void pthread_exit( void *exitValuePtr );
 ```
-- used to terminate a thread, if not the `pthread` will automatically when end of `startRoutine` is reached $\implies$ no exit value
+- used to terminate a thread, if not the `pthread` will automatically terminate when end of `startRoutine` is reached $\implies$ no exit value
+- makes the `exitValuePtr` available to any successful `join()` method
 ### C4. Creation + Termination Example
 ```c
 #include <stdio.h>
 #include <pthread.h>
-void* sayHello(void* arg)
+void* sayHello(void *arg)
 {
      printf("Just to say hello!\n");
      pthread_exit( NULL );
@@ -275,14 +294,27 @@ int main()
 }
 ```
 ### C5. Process Synchronization
-- can use `pthread_join()` waits for the termination of another `pthread`
+- can use `pthread_join()` to wait for the termination of another `pthread` $\implies$ essentially suspends execution of  calling thread until other thread terminates
+	- allow parent thread to wait for child threads before moving forward
 ```c
 int pthread_join( pthread_t threadID, void **status);
 ```
 - returns the value of `0` for success, returns non-zero if got error
 - `**status` is the exit value returned by the target `pthread`
-### C6. Other features
+
+### C6. The `fork`-`join` pattern
+- depicts what usually occurs for a multi-threaded process
+- main thread creates forks of sub-threads and pass arguments (and task) for them to work on $\implies$ single responsibility principle
+
+- main thread joins the sub-threads to collect their results when they are completed (wait until all done), and outputs some result thereafter when main thread completes or terminates
+	- independent relationship between main thread and its children
+
+	![fork-join-pattern](../assets/fork-join-pattern.png)
+
+### C7. Other features
 - yielding by giving up CPU voluntarily
 - advanced synchronization
 - scheduling policies
 - binding to kernel threads
+
+*Documentation:* `man pthread`
