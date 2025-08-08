@@ -27,9 +27,12 @@ Recall that processes have the following:
 A process is an entire context in which a program operates in.
 ### B1. Shared Memory
 - process $P_1$ creates shared memory region $M$
-	- usually the OS will allocate separate address spaces for each process in execution
+	- usually the OS will allocate separate address spaces for each process in execution (when $\not \exists$ shared memory) $\implies$ prevent "unauthorized" access to other memory region
+		- processes involved $P_1, P_2, \ldots, P_n$ need to agree to remove the restriction
 
-- process $P_2$ attaches memory region $M$ to its **own memory space**
+	- will technically first reside in $P_1$ before other processes attach the their region to it
+
+- process $P_2$ attaches the memory region $M$ to its **own memory space**
 - $P_1$ and $P_2$ can communicate using memory region $M$
 	- any memory writes to the region can be seen by all the other parties
 	- $M$ is a shared memory region and behaves very similarly to normal memory region
@@ -38,13 +41,22 @@ A process is an entire context in which a program operates in.
 
 - same model is applicable to multiple processes sharing the same memory region
 	- data in the shared memory region is no longer managed by the OS, but rather, the $n$ processes that share the region
+	- code and data are shared in threads contained within the same process
+	- code and data are shared using `shmget()` function in Unix systems (and `mmap()` as well)
+
 	![shared-memory](../assets/shared-memory.png)
 
 
-- possible memory model is one that of producer-consumer $\implies$ need to agree how data is structured
+##### The producer-consumer problem
+- possible memory model is one that of a **producer-consumer model** $\implies$ need to agree how data is structured
+	- producer process produces information that is consumed by the consumer process
+	- the buffer of items that is done with this operation (read from $P_1$ and write to $P_2$) is implemented via shared memory
 
 - must ensure that no two processes are performing a write operation at once $\implies$ data corruption
+	- producer will produce one item while consumer will consume another item
+	- consumer can only consume items that **has been produced** $\implies$ error raised if it attempts to consume a non-existent item
 ##### Example: Chromium Browsers
+- multiple browser tabs which involve the renderer and plugins for video processing etc.
 ![shared-memory-eg](../assets/shared-memory-eg.png)
 ##### Advantages
 - **Efficient:** only the initial steps, the create and attach shared memory region involves the OS
@@ -54,7 +66,6 @@ A process is an entire context in which a program operates in.
 - **Synchronization:** shared resource but we need to synchronize access
 - **Harder to implement**
 - Error prone
-
 ##### Steps for usage
 1. Create or locate a shared memory region $M$
 2. Attach $M$ to the process memory space

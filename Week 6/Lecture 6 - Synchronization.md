@@ -1,4 +1,8 @@
 ## A. Race Condition
+> A **cooperating process** is one that can affect or be affected by other processes executing in the system.
+- directly share a logical address space (shared memory) or are allowed to share data only through messages
+- cannot have concurrent access to shared data by cooperating processes $\implies$ leads to **data inconsistency**
+
 > **concurrency** is the technique used by processors (alongside CPU scheduling) that distributes computing resources amongst executable entities
 - creates the illusion that the processes are all running at once
 
@@ -32,6 +36,7 @@ X = X + 1000
 > **Synchronization** is the coordination among threads, usually regarding shared data
 - incorrect execution is due to unsynchronized access to shared modifiable resource
 - solution outline $\implies$ designate code segment *with race condition* as critical section and only one process can execute in the critical section
+- in the *producer-consumer model,* both parties need to be synchronized s.t. consumer does not try to consumer an item that has yet to be produced
 ## B. Critical Section
 > A **critical section** is code that exactly one thread can execute at once.
 
@@ -65,7 +70,6 @@ X = X + 1000
 ```nasm
 TestAndSet reg, [mem]
 ```
-
 **Behaviour**
 - Load current content of `[mem]` into `reg`
 - store a `1` into `[mem]`
@@ -76,5 +80,8 @@ TestAndSet reg, [mem]
 	- compare and exchange
 	- atomic swap
 	- load link, store conditional
+
+### C2. High-level language
+- 
 
 ## D. Classical synchronization problems

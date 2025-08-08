@@ -70,7 +70,11 @@
 - each machine is dedicated to a user, which gives rise to the personal OS
 - different models $\to$ Single User (i.e. Windows) and General Time Sharing (Unix)
 
----
+$$
+\begin{align}
+\\\\\\\\\\\\\\\\\\
+\end{align}
+$$
 ## B. Motivation for Operating Systems
 ### B1. Abstraction
 - $\exists$ large variation in hardware configurations
@@ -105,7 +109,12 @@
 	- enforcement of usage policies
 
 - allows for program portability across different hardware implementations
----
+
+$$
+\begin{align}
+\\\\\\\\
+\end{align}
+$$
 ## C. Operating System Structures
 - implementation of the OS describes the best way of providing the capabilities or functionalities
 - structure of the OS describes the organization of various components
@@ -136,22 +145,27 @@
 
 ### C2. OS Structure Types
 1. **Monolithic**
-	- the kernel is one big special program
+	- the kernel is one big special program (in kernel mode)
+		- essential OS services are combined into one code block (process, memory, file system management etc.)
 	- good software engineering principles are possible 
 	- traditional approach taken by most Unix variants and Windows NT
 		![monolithic-OS-components](../assets/monolithic-OS-components.png)
 
 2. **Microkernel**
-	- is very small and clean
+	- is very small and clean $\implies$ removes non-essential components from kernel, implement instead as user programs (i.e. OS doesn't have device, process, memory and FS management)
 	- only provides basic and essential facilities such as inter-process communication (IPC)
 		![microkernel-OS-components](../assets/microkernel-OS-components.png)
-
 
 3. **Layered**
 	- is the generalization of monolithic systems
 	- can organize the components into hierarchy of layers
-		- upper layers make use of lower layer's services
-		- lowest layer is the hardware and the highest layer is the user interface
+		- upper layers (layers $1, \ldots, n$) make use of lower layer's services
+		- lowest layer (layer $0$) is the hardware and the highest layer is the user interface
+
+	- simplifies debugging to specific layers if there are errors $\implies$ modular, so simple to debug and maintain. Follows principle of encapsulation
+	- overhead from each new layer is introduced (might be a bad thing for performance)
+
+	- i.e. used by the Unix OS
 
 4. **Client-Server Architecture**
 	- is a variant of the microkernel where there are two classes of processes
@@ -160,8 +174,13 @@
 		- client and server processes can be on distinct machines
 
 5. **Exokernel**
-
----
+- provide application-level management of hardware resources $\implies$ enables app-specific customization
+- minimal OS size
+$$
+\begin{align}
+\\\\\\\\\\\\\\
+\end{align}
+$$
 ## D. Virtualization
 ### D1. Motivation
 - OS assumes total control of the hardware, but not really possible to run multiple OSes on the same hardware
